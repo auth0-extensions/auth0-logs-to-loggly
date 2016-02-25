@@ -1,10 +1,11 @@
-const Loggly  = require('loggly');
-const Auth0   = require('auth0');
-const async   = require('async');
-const moment  = require('moment');
-const express = require('express');
-const Webtask = require('webtask-tools');
-const app     = express();
+const Loggly    = require('loggly');
+const Auth0     = require('auth0');
+const async     = require('async');
+const moment    = require('moment');
+const useragent = require('useragent');
+const express   = require('express');
+const Webtask   = require('webtask-tools');
+const app       = express();
 
 function lastLogCheckpoint (req, res) {
   let ctx               = req.webtaskContext;

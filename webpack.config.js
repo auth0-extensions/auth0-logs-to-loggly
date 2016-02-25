@@ -43,7 +43,12 @@ module.exports = {
   }),
   plugins: [
     new Webpack.optimize.DedupePlugin(),
-    new Webpack.NoErrorsPlugin()
+    new Webpack.NoErrorsPlugin(),
+    new Webpack.optimize.UglifyJsPlugin({
+      compress: {
+        warnings: false
+      }
+    })
   ],
   resolve: {
     modulesDirectories: ['node_modules'],
