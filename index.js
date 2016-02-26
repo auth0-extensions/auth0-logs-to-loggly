@@ -68,21 +68,31 @@ function lastLogCheckpoint (req, res) {
         getLogs({ checkpointId: startCheckpointId });
       },
       (context, callback) => {
-        context.logs = context.logs.map((record) => {
-          let level = 0;
-          record.type_code = record.type;
-          if (logTypes[record.type]) {
-            level = logTypes[record.type].level;
-            record.type = logTypes[record.type].event;
+        const min_log_level = parseInt(ctx.data.LOG_LEVEL) || 0;
+        const log_matches_level = (log) => {
+          if (logTypes[log.type]) {
+            return logTypes[log.type].level >= min_log_level;
           }
+          return true;
+        }
 
-          let agent = useragent.parse(record.user_agent);
-          record.os = agent.os.toString();
-          record.os_version = agent.os.toVersion();
-          record.device = agent.device.toString();
-          record.device_version = agent.device.toVersion();
-          return record;
-        });
+        const types_filter = (ctx.data.LOG_TYPES && ctx.data.LOG_TYPES.split(',')) || [];
+        const log_matches_types = (log) => {
+          if (!types_filter || !types_filter.length) return true;
+          return log.type && types_filter.indexOf(log.type) >= 0;
+        };
+
+        context.logs = context.logs
+          .filter(l => l.type !== 'sapi' && l.type !== 'fapi')
+          .filter(log_matches_level)
+          .filter(log_matches_types);
+
+        console.log(`Filtered logs on log level '${min_log_level}': ${context.logs.length}.`);
+
+        if (ctx.data.LOG_TYPES) {
+          console.log(`Filtered logs on '${ctx.data.LOG_TYPES}': ${context.logs.length}.`);
+        }
+
         callback(null, context);
       },
       (context, callback) => {
