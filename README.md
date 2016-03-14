@@ -29,7 +29,7 @@ $ wt cron schedule \
     --secret LOGGLY_CUSTOMER_TOKEN="LOGGLY_CUSTOMER_TOKEN" \
     --secret LOGGLY_SUBDOMAIN="LOGGLY_SUBDOMAIN" \
     "*/5 * * * *" \
-    dist/auth0-logs-to-loggly-1.0.0.js
+    build/bundle.js
 ```
 
 
