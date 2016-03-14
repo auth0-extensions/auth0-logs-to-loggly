@@ -31,7 +31,7 @@ $ wt cron schedule \
     --secret LOGGLY_CUSTOMER_TOKEN="LOGGLY_CUSTOMER_TOKEN" \
     --secret LOGGLY_SUBDOMAIN="LOGGLY_SUBDOMAIN" \
     "*/5 * * * *" \
-    build/bundle.js
+    ./build/bundle.js
 ```
 
 
