@@ -17,7 +17,7 @@ function lastLogCheckpoint (req, res) {
   }
 
   // If this is a scheduled task, we'll get the last log checkpoint from the previous run and continue from there.
-  req.webtaskContext.read('history', {}, function (err, data) {
+  req.webtaskContext.storage.get((err, data) => {
 
     let startCheckpointId = typeof data === 'undefined' ? null : data.checkpointId;
 
@@ -117,7 +117,7 @@ function lastLogCheckpoint (req, res) {
       if (err) {
         console.log('Job failed.');
 
-        return req.webtaskContext.write('history', JSON.stringify({checkpointId: startCheckpointId}), {}, function (error) {
+        return req.webtaskContext.storage.set({checkpointId: startCheckpointId}, {force: 1}, (error) => {
           if (error) return res.status(500).send(error);
 
           res.status(500).send({
@@ -127,7 +127,7 @@ function lastLogCheckpoint (req, res) {
       }
 
       console.log('Job complete.');
-      return req.webtaskContext.write('history', JSON.stringify({checkpointId: context.checkpointId, totalLogsProcessed: context.logs.length}), {}, function (error) {
+      return req.webtaskContext.storage.set({checkpointId: context.checkpointId, totalLogsProcessed: context.logs.length}, {force: 1}, (error) => {
         if (error) return res.status(500).send(error);
 
         res.sendStatus(200);
