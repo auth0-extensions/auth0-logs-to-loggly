@@ -6,6 +6,8 @@ const useragent = require('useragent');
 const express   = require('express');
 const Webtask   = require('webtask-tools');
 const app       = express();
+const Request   = require('superagent');
+const memoizer  = require('lru-memoizer');
 
 function lastLogCheckpoint (req, res) {
   let ctx               = req.webtaskContext;
@@ -22,10 +24,9 @@ function lastLogCheckpoint (req, res) {
     let startCheckpointId = typeof data === 'undefined' ? null : data.checkpointId;
 
     // Initialize both clients.
-    const auth0 = new Auth0({
-       domain:       ctx.data.AUTH0_DOMAIN,
-       clientID:     ctx.data.AUTH0_CLIENT_ID,
-       clientSecret: ctx.data.AUTH0_CLIENT_SECRET
+    const auth0 = new Auth0.ManagementClient({
+       domain: ctx.data.AUTH0_DOMAIN,
+       token:  req.access_token
     });
 
     const loggly = Loggly.createClient({
@@ -37,19 +38,11 @@ function lastLogCheckpoint (req, res) {
     // Start the process.
     async.waterfall([
       (callback) => {
-        auth0.getAccessToken((err) => {
-          if (err) {
-            console.log('Error authenticating:', err);
-          }
-          return callback(err);
-        });
-      },
-      (callback) => {
         const getLogs = (context) => {
           console.log(`Downloading logs from: ${context.checkpointId || 'Start'}.`);
 
           context.logs = context.logs || [];
-          auth0.logs.getAll({ take: 200, from: context.checkpointId }, (err, logs) => {
+          auth0.logs.getAll({ take: 100, from: context.checkpointId }, (err, logs) => {
             if (err) {
               return callback(err);
             }
@@ -293,6 +286,47 @@ const logTypes = {
     level: 3 // Error
   }
 };
+
+const getTokenCached = memoizer({
+  load: (apiUrl, audience, clientId, clientSecret, cb) => {
+    Request
+      .post(apiUrl)
+      .send({
+        audience: audience,
+        grant_type: 'client_credentials',
+        client_id: clientId,
+        client_secret: clientSecret
+      })
+      .type('application/json')
+      .end(function (err, res) {
+        if (err || !res.ok) {
+          console.log('err');
+          cb(null, err);
+        } else {
+          cb(res.body.access_token);
+        }
+      });
+  },
+  hash: (apiUrl) => apiUrl,
+  max: 100,
+  maxAge: 1000 * 30
+});
+
+app.use(function (req, res, next) {
+  var apiUrl       = 'https://' + req.webtaskContext.data.AUTH0_DOMAIN + '/oauth/token';
+  var audience     = 'https://' + req.webtaskContext.data.AUTH0_DOMAIN + '/api/v2/';
+  var clientId     = req.webtaskContext.data.AUTH0_CLIENT_ID;
+  var clientSecret = req.webtaskContext.data.AUTH0_CLIENT_SECRET;
+
+  getTokenCached(apiUrl, audience, clientId, clientSecret, function (access_token, err) {
+    if (err) {
+      return next(err);
+    }
+
+    req.access_token = access_token;
+    next();
+  });
+});
 
 app.get ('/', lastLogCheckpoint);
 app.post('/', lastLogCheckpoint);
