@@ -9,7 +9,7 @@ const app       = express();
 
 function lastLogCheckpoint (req, res) {
   let ctx               = req.webtaskContext;
-  let required_settings = ['AUTH0_DOMAIN', 'AUTH0_GLOBAL_CLIENT_ID', 'AUTH0_GLOBAL_CLIENT_SECRET', 'LOGGLY_CUSTOMER_TOKEN'];
+  let required_settings = ['AUTH0_DOMAIN', 'AUTH0_CLIENT_ID', 'AUTH0_CLIENT_SECRET', 'LOGGLY_CUSTOMER_TOKEN'];
   let missing_settings  = required_settings.filter((setting) => !ctx.data[setting]);
 
   if (missing_settings.length) {
@@ -24,8 +24,8 @@ function lastLogCheckpoint (req, res) {
     // Initialize both clients.
     const auth0 = new Auth0({
        domain:       ctx.data.AUTH0_DOMAIN,
-       clientID:     ctx.data.AUTH0_GLOBAL_CLIENT_ID,
-       clientSecret: ctx.data.AUTH0_GLOBAL_CLIENT_SECRET
+       clientID:     ctx.data.AUTH0_CLIENT_ID,
+       clientSecret: ctx.data.AUTH0_CLIENT_SECRET
     });
 
     const loggly = Loggly.createClient({
@@ -49,7 +49,7 @@ function lastLogCheckpoint (req, res) {
           console.log(`Downloading logs from: ${context.checkpointId || 'Start'}.`);
 
           context.logs = context.logs || [];
-          auth0.getLogs({ take: 200, from: context.checkpointId }, (err, logs) => {
+          auth0.logs.getAll({ take: 200, from: context.checkpointId }, (err, logs) => {
             if (err) {
               return callback(err);
             }

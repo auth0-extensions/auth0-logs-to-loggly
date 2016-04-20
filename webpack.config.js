@@ -3,7 +3,6 @@ var Request       = require('sync-request');
 var Webpack       = require('webpack');
 var _             = require('lodash');
 var pkg           = require('./package.json');
-var WebpackOnBuildPlugin = require('on-build-webpack');
 var fs = require('fs');
 
 var LIST_MODULES_URL = 'https://webtask.it.auth0.com/api/run/wt-tehsis-gmail_com-1?key=eyJhbGciOiJIUzI1NiIsImtpZCI6IjIifQ.eyJqdGkiOiJmZGZiOWU2MjQ0YjQ0YWYyYjc2YzAwNGU1NjgwOGIxNCIsImlhdCI6MTQzMDMyNjc4MiwiY2EiOlsiZDQ3ZDNiMzRkMmI3NGEwZDljYzgwOTg3OGQ3MWQ4Y2QiXSwiZGQiOjAsInVybCI6Imh0dHA6Ly90ZWhzaXMuZ2l0aHViLmlvL3dlYnRhc2tpby1jYW5pcmVxdWlyZS90YXNrcy9saXN0X21vZHVsZXMuanMiLCJ0ZW4iOiIvXnd0LXRlaHNpcy1nbWFpbF9jb20tWzAtMV0kLyJ9.MJqAB9mgs57tQTWtRuZRj6NCbzXxZcXCASYGISk3Q6c';
@@ -50,13 +49,6 @@ module.exports = {
       compress: {
         warnings: false
       }
-    }),
-    new WebpackOnBuildPlugin(function() {
-      var path   = './build/bundle.js';
-      var bundle = fs.readFileSync(path, 'utf8');
-      // Hack to ensure webtask will be using 0.8.2 and not latest.
-      bundle = bundle.replace(/require\("auth0"\)/ig, 'require("auth0@0.8.2")');
-      fs.writeFileSync(path, bundle);
     })
   ],
   resolve: {
