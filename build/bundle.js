@@ -1,7 +1,2478 @@
-module.exports=function(t){function e(r){if(n[r])return n[r].exports;var o=n[r]={exports:{},id:r,loaded:!1};return t[r].call(o.exports,o,o.exports,e),o.loaded=!0,o.exports}var n={};return e.m=t,e.c=n,e.p="/build/",e(0)}([function(t,e,n){(function(e){"use strict";function r(t,n){var r=t.webtaskContext,u=["AUTH0_DOMAIN","AUTH0_CLIENT_ID","AUTH0_CLIENT_SECRET","LOGGLY_CUSTOMER_TOKEN"],l=u.filter(function(t){return!r.data[t]});return l.length?n.status(400).send({message:"Missing settings: "+l.join(", ")}):void t.webtaskContext.storage.get(function(u,l){var c="undefined"==typeof l?null:l.checkpointId,f=new i.ManagementClient({domain:r.data.AUTH0_DOMAIN,token:t.access_token}),h=o.createClient({token:r.data.LOGGLY_CUSTOMER_TOKEN,subdomain:r.data.LOGGLY_SUBDOMAIN||"-",tags:["auth0"]});s.waterfall([function(t){var n=function r(n){console.log("Downloading logs from: "+(n.checkpointId||"Start")+"."),n.logs=n.logs||[],f.logs.getAll({take:100,from:n.checkpointId},function(o,i){return o?t(o):i&&i.length?(i.forEach(function(t){return n.logs.push(t)}),n.checkpointId=n.logs[n.logs.length-1]._id,e(function(){return r(n)})):(console.log("Total logs: "+n.logs.length+"."),t(null,n))})};n({checkpointId:c})},function(t,e){var n=parseInt(r.data.LOG_LEVEL)||0,o=function(t){return p[t.type]?p[t.type].level>=n:!0},i=r.data.LOG_TYPES&&r.data.LOG_TYPES.split(",")||[],s=function(t){return i&&i.length?t.type&&i.indexOf(t.type)>=0:!0};t.logs=t.logs.filter(function(t){return"sapi"!==t.type&&"fapi"!==t.type}).filter(o).filter(s),console.log("Filtered logs on log level '"+n+"': "+t.logs.length+"."),r.data.LOG_TYPES&&console.log("Filtered logs on '"+r.data.LOG_TYPES+"': "+t.logs.length+"."),e(null,t)},function(t,e){console.log("Uploading blobs..."),s.eachLimit(t.logs,5,function(t,e){var n=a(t.date),r=n.format("YYYY/MM/DD")+"/"+n.format("HH")+"/"+t._id+".json";console.log("Uploading "+r+"."),h.log(JSON.stringify(t),e)},function(n){return n?e(n):(console.log("Upload complete."),e(null,t))})}],function(e,r){return e?(console.log("Job failed."),t.webtaskContext.storage.set({checkpointId:c},{force:1},function(t){return t?n.status(500).send(t):void n.status(500).send({error:e})})):(console.log("Job complete."),t.webtaskContext.storage.set({checkpointId:r.checkpointId,totalLogsProcessed:r.logs.length},{force:1},function(t){return t?n.status(500).send(t):void n.sendStatus(200)}))})})}var o=n(3),i=n(19),s=n(20),a=n(21),u=(n(22),n(23)),l=n(24),c=u(),f=n(26),h=n(27),p={s:{event:"Success Login",level:1},seacft:{event:"Success Exchange",level:1},feacft:{event:"Failed Exchange",level:3},f:{event:"Failed Login",level:3},w:{event:"Warnings During Login",level:2},du:{event:"Deleted User",level:1},fu:{event:"Failed Login (invalid email/username)",level:3},fp:{event:"Failed Login (wrong password)",level:3},fc:{event:"Failed by Connector",level:3},fco:{event:"Failed by CORS",level:3},con:{event:"Connector Online",level:1},coff:{event:"Connector Offline",level:3},fcpro:{event:"Failed Connector Provisioning",level:4},ss:{event:"Success Signup",level:1},fs:{event:"Failed Signup",level:3},cs:{event:"Code Sent",level:0},cls:{event:"Code/Link Sent",level:0},sv:{event:"Success Verification Email",level:0},fv:{event:"Failed Verification Email",level:0},scp:{event:"Success Change Password",level:1},fcp:{event:"Failed Change Password",level:3},sce:{event:"Success Change Email",level:1},fce:{event:"Failed Change Email",level:3},scu:{event:"Success Change Username",level:1},fcu:{event:"Failed Change Username",level:3},scpn:{event:"Success Change Phone Number",level:1},fcpn:{event:"Failed Change Phone Number",level:3},svr:{event:"Success Verification Email Request",level:0},fvr:{event:"Failed Verification Email Request",level:3},scpr:{event:"Success Change Password Request",level:0},fcpr:{event:"Failed Change Password Request",level:3},fn:{event:"Failed Sending Notification",level:3},sapi:{event:"API Operation"},fapi:{event:"Failed API Operation"},limit_wc:{event:"Blocked Account",level:4},limit_ui:{event:"Too Many Calls to /userinfo",level:4},api_limit:{event:"Rate Limit On API",level:4},sdu:{event:"Successful User Deletion",level:1},fdu:{event:"Failed User Deletion",level:3}},d=h({load:function(t,e,n,r,o){f.post(t).send({audience:e,grant_type:"client_credentials",client_id:n,client_secret:r}).type("application/json").end(function(t,e){t||!e.ok?(console.log("err"),o(null,t)):o(e.body.access_token)})},hash:function(t){return t},max:100,maxAge:3e4});c.use(function(t,e,n){var r="https://"+t.webtaskContext.data.AUTH0_DOMAIN+"/oauth/token",o="https://"+t.webtaskContext.data.AUTH0_DOMAIN+"/api/v2/",i=t.webtaskContext.data.AUTH0_CLIENT_ID,s=t.webtaskContext.data.AUTH0_CLIENT_SECRET;d(r,o,i,s,function(e,r){return r?n(r):(t.access_token=e,void n())})}),c.get("/",r),c.post("/",r),t.exports=l.fromExpress(c)}).call(e,n(1).setImmediate)},function(t,e,n){(function(t,r){function o(t,e){this._id=t,this._clearFn=e}var i=n(2).nextTick,s=Function.prototype.apply,a=Array.prototype.slice,u={},l=0;e.setTimeout=function(){return new o(s.call(setTimeout,window,arguments),clearTimeout)},e.setInterval=function(){return new o(s.call(setInterval,window,arguments),clearInterval)},e.clearTimeout=e.clearInterval=function(t){t.close()},o.prototype.unref=o.prototype.ref=function(){},o.prototype.close=function(){this._clearFn.call(window,this._id)},e.enroll=function(t,e){clearTimeout(t._idleTimeoutId),t._idleTimeout=e},e.unenroll=function(t){clearTimeout(t._idleTimeoutId),t._idleTimeout=-1},e._unrefActive=e.active=function(t){clearTimeout(t._idleTimeoutId);var e=t._idleTimeout;e>=0&&(t._idleTimeoutId=setTimeout(function(){t._onTimeout&&t._onTimeout()},e))},e.setImmediate="function"==typeof t?t:function(t){var n=l++,r=arguments.length<2?!1:a.call(arguments,1);return u[n]=!0,i(function(){u[n]&&(r?t.apply(null,r):t.call(null),e.clearImmediate(n))}),n},e.clearImmediate="function"==typeof r?r:function(t){delete u[t]}}).call(e,n(1).setImmediate,n(1).clearImmediate)},function(t,e){function n(){l=!1,s.length?u=s.concat(u):c=-1,u.length&&r()}function r(){if(!l){var t=setTimeout(n);l=!0;for(var e=u.length;e;){for(s=u,u=[];++c<e;)s&&s[c].run();c=-1,e=u.length}s=null,l=!1,clearTimeout(t)}}function o(t,e){this.fun=t,this.array=e}function i(){}var s,a=t.exports={},u=[],l=!1,c=-1;a.nextTick=function(t){var e=new Array(arguments.length-1);if(arguments.length>1)for(var n=1;n<arguments.length;n++)e[n-1]=arguments[n];u.push(new o(t,e)),1!==u.length||l||setTimeout(r,0)},o.prototype.run=function(){this.fun.apply(null,this.array)},a.title="browser",a.browser=!0,a.env={},a.argv=[],a.version="",a.versions={},a.on=i,a.addListener=i,a.once=i,a.off=i,a.removeListener=i,a.removeAllListeners=i,a.emit=i,a.binding=function(t){throw new Error("process.binding is not supported")},a.cwd=function(){return"/"},a.chdir=function(t){throw new Error("process.chdir is not supported")},a.umask=function(){return 0}},function(t,e,n){var r=e;r.version=n(4).version,r.createClient=n(5).createClient,r.serialize=n(13).serialize,r.Loggly=n(5).Loggly,r.Search=n(16).Search},function(t,e){t.exports={name:"loggly",description:"A client implementation for Loggly cloud Logging-as-a-Service API",version:"1.1.0",author:{name:"Charlie Robbins",email:"charlie.robbins@gmail.com"},repository:{type:"git",url:"git+ssh://git@github.com/winstonjs/node-loggly.git"},keywords:["cloud computing","api","logging","loggly"],dependencies:{request:"2.67.x",timespan:"2.3.x","json-stringify-safe":"5.0.x"},devDependencies:{"common-style":"^3.1.0",vows:"0.8.x"},main:"./lib/loggly",scripts:{pretest:"common lib/**/*.js lib/*.js test/helpers.js",test:"vows test/*-test.js --spec"},license:"MIT",engines:{node:">= 0.8.0"},gitHead:"5e5ab617ae5ee69dd25ae69c6bdedb1b4098fa46",bugs:{url:"https://github.com/winstonjs/node-loggly/issues"},homepage:"https://github.com/winstonjs/node-loggly#readme",_id:"loggly@1.1.0",_shasum:"663e3edb8c880b14ee8950cb35c52e0939c537ae",_from:"loggly@>=1.1.0 <2.0.0",_npmVersion:"2.14.15",_nodeVersion:"4.2.2",_npmUser:{name:"indexzero",email:"charlie.robbins@gmail.com"},maintainers:[{name:"indexzero",email:"charlie.robbins@gmail.com"},{name:"jcrugzz",email:"jcrugzz@gmail.com"}],dist:{shasum:"663e3edb8c880b14ee8950cb35c52e0939c537ae",tarball:"http://registry.npmjs.org/loggly/-/loggly-1.1.0.tgz"},directories:{},_resolved:"https://registry.npmjs.org/loggly/-/loggly-1.1.0.tgz",readme:"ERROR: No README data found!"}},function(t,e,n){(function(t){function r(t){var e;try{e=JSON.stringify(t)}catch(n){e=c(t,null,null,o)}return e}function o(){}var i=n(10),s=n(11),a=(n(12),n(13)),u=n(3),l=n(16).Search,c=n(18);e.createClient=function(t){return new f(t)};var f=e.Loggly=function(t){if(!t||!t.subdomain||!t.token)throw new Error("options.subdomain and options.token are required.");i.EventEmitter.call(this),this.subdomain=t.subdomain,this.token=t.token,this.host=t.host||"logs-01.loggly.com",this.json=t.json||null,this.auth=t.auth||null,this.proxy=t.proxy||null,this.userAgent="node-loggly "+u.version,this.useTagHeader="useTagHeader"in t?t.useTagHeader:!0,this.tags=t.tags?this.tagFilter(t.tags):null;var e="https://"+this.host,n=t.api||"apiv2";this.urls={"default":e,log:[e,"inputs",this.token].join("/"),bulk:[e,"bulk",this.token].join("/"),api:"https://"+[this.subdomain,"loggly","com"].join(".")+"/"+n}};s.inherits(f,i.EventEmitter),f.prototype.log=function(e,n,o){function i(t){return t instanceof Object?u.json?r(t):a.serialize(t):u.json?r({message:t}):t}o||"function"!=typeof n||(o=n,n=null);var s,u=this,l=Array.isArray(e);return e=l?e.map(i).join("\n"):i(e),s={uri:l?this.urls.bulk:this.urls.log,method:"POST",body:e,proxy:this.proxy,headers:{host:this.host,accept:"*/*","user-agent":this.userAgent,"content-type":this.json?"application/json":"text/plain","content-length":t.byteLength(e)}},n=n?this.tags?this.tags.concat(this.tagFilter(n)):this.tagFilter(n):this.tags,n&&(this.useTagHeader?s.headers["X-LOGGLY-TAG"]=n.join(","):s.uri+="/tag/"+n.join(",")+"/"),a.loggly(s,o,function(t,e){try{var n=JSON.parse(e);u.emit("log",n),o&&o(null,n)}catch(r){o&&o(new Error("Unspecified error from Loggly: "+r))}}),this},f.prototype.tagFilter=function(t){var e=/^[\w\d][\w\d-_.]+/;return t=Array.isArray(t)?t:[t],t.filter(function(t){return e.test(t)&&t.length<=64})},f.prototype.customer=function(t){a.loggly({uri:this.logglyUrl("customer"),auth:this.auth},t,function(e,n){var r;try{r=JSON.parse(n)}catch(o){return t(o)}t(null,r)})},f.prototype.search=function(t,e){var n="string"==typeof t?{query:t}:t;return n.callback=e,new l(n,this)},f.prototype.logglyUrl=function(){var t=Array.prototype.slice.call(arguments);return[this.urls.api].concat(t).join("/")}}).call(e,n(6).Buffer)},function(t,e,n){(function(t,r){/*!
-	 * The buffer module from node.js, for the browser.
+module.exports =
+/******/ (function(modules) { // webpackBootstrap
+/******/ 	// The module cache
+/******/ 	var installedModules = {};
+
+/******/ 	// The require function
+/******/ 	function __webpack_require__(moduleId) {
+
+/******/ 		// Check if module is in cache
+/******/ 		if(installedModules[moduleId])
+/******/ 			return installedModules[moduleId].exports;
+
+/******/ 		// Create a new module (and put it into the cache)
+/******/ 		var module = installedModules[moduleId] = {
+/******/ 			exports: {},
+/******/ 			id: moduleId,
+/******/ 			loaded: false
+/******/ 		};
+
+/******/ 		// Execute the module function
+/******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
+
+/******/ 		// Flag the module as loaded
+/******/ 		module.loaded = true;
+
+/******/ 		// Return the exports of the module
+/******/ 		return module.exports;
+/******/ 	}
+
+
+/******/ 	// expose the modules object (__webpack_modules__)
+/******/ 	__webpack_require__.m = modules;
+
+/******/ 	// expose the module cache
+/******/ 	__webpack_require__.c = installedModules;
+
+/******/ 	// __webpack_public_path__
+/******/ 	__webpack_require__.p = "/build/";
+
+/******/ 	// Load entry module and return exports
+/******/ 	return __webpack_require__(0);
+/******/ })
+/************************************************************************/
+/******/ ([
+/* 0 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var Loggly = __webpack_require__(1);
+	var Auth0 = __webpack_require__(13);
+	var async = __webpack_require__(14);
+	var moment = __webpack_require__(15);
+	var useragent = __webpack_require__(16);
+	var express = __webpack_require__(17);
+	var Webtask = __webpack_require__(18);
+	var app = express();
+	var Request = __webpack_require__(20);
+	var memoizer = __webpack_require__(21);
+
+	function lastLogCheckpoint(req, res) {
+	  var ctx = req.webtaskContext;
+	  var required_settings = ['AUTH0_DOMAIN', 'AUTH0_CLIENT_ID', 'AUTH0_CLIENT_SECRET', 'LOGGLY_CUSTOMER_TOKEN'];
+	  var missing_settings = required_settings.filter(function (setting) {
+	    return !ctx.data[setting];
+	  });
+
+	  if (missing_settings.length) {
+	    return res.status(400).send({ message: 'Missing settings: ' + missing_settings.join(', ') });
+	  }
+
+	  // If this is a scheduled task, we'll get the last log checkpoint from the previous run and continue from there.
+	  req.webtaskContext.storage.get(function (err, data) {
+
+	    var startCheckpointId = typeof data === 'undefined' ? null : data.checkpointId;
+
+	    // Initialize both clients.
+	    var auth0 = new Auth0.ManagementClient({
+	      domain: ctx.data.AUTH0_DOMAIN,
+	      token: req.access_token
+	    });
+
+	    var loggly = Loggly.createClient({
+	      token: ctx.data.LOGGLY_CUSTOMER_TOKEN,
+	      subdomain: ctx.data.LOGGLY_SUBDOMAIN || '-',
+	      tags: ['auth0']
+	    });
+
+	    // Start the process.
+	    async.waterfall([function (callback) {
+	      var getLogs = function getLogs(context) {
+	        console.log('Logs from: ' + (context.checkpointId || 'Start') + '.');
+
+	        var take = Number.parseInt(ctx.data.BATCH_SIZE);
+
+	        take = take > 100 ? 100 : take;
+
+	        context.logs = context.logs || [];
+
+	        getLogsFromAuth0(req.webtaskContext.data.AUTH0_DOMAIN, req.access_token, take, context.checkpointId, function (logs, err) {
+	          if (err) {
+	            console.log('Error getting logs from Auth0', err);
+	            return callback(err);
+	          }
+
+	          if (logs && logs.length) {
+	            logs.forEach(function (l) {
+	              return context.logs.push(l);
+	            });
+	            context.checkpointId = context.logs[context.logs.length - 1]._id;
+	          }
+
+	          console.log('Total logs: ' + context.logs.length + '.');
+	          return callback(null, context);
+	        });
+	      };
+
+	      getLogs({ checkpointId: startCheckpointId });
+	    }, function (context, callback) {
+	      var min_log_level = parseInt(ctx.data.LOG_LEVEL) || 0;
+	      var log_matches_level = function log_matches_level(log) {
+	        if (logTypes[log.type]) {
+	          return logTypes[log.type].level >= min_log_level;
+	        }
+	        return true;
+	      };
+
+	      var types_filter = ctx.data.LOG_TYPES && ctx.data.LOG_TYPES.split(',') || [];
+	      var log_matches_types = function log_matches_types(log) {
+	        if (!types_filter || !types_filter.length) return true;
+	        return log.type && types_filter.indexOf(log.type) >= 0;
+	      };
+
+	      context.logs = context.logs.filter(function (l) {
+	        return l.type !== 'sapi' && l.type !== 'fapi';
+	      }).filter(log_matches_level).filter(log_matches_types);
+
+	      callback(null, context);
+	    }, function (context, callback) {
+	      console.log('Sending ' + context.logs.length);
+
+	      // loggly
+	      loggly.log(context.logs, function (err) {
+	        if (err) {
+	          console.log('Error sending logs to Sumologic', err);
+	          return callback(err);
+	        }
+
+	        console.log('Upload complete.');
+
+	        return callback(null, context);
+	      });
+	    }], function (err, context) {
+	      if (err) {
+	        console.log('Job failed.');
+
+	        return req.webtaskContext.storage.set({ checkpointId: startCheckpointId }, { force: 1 }, function (error) {
+	          if (error) {
+	            console.log('Error storing startCheckpoint', error);
+	            return res.status(500).send({ error: error });
+	          }
+
+	          res.status(500).send({
+	            error: err
+	          });
+	        });
+	      }
+
+	      console.log('Job complete.');
+
+	      return req.webtaskContext.storage.set({
+	        checkpointId: context.checkpointId,
+	        totalLogsProcessed: context.logs.length
+	      }, { force: 1 }, function (error) {
+	        if (error) {
+	          console.log('Error storing checkpoint', error);
+	          return res.status(500).send({ error: error });
+	        }
+
+	        res.sendStatus(200);
+	      });
+	    });
+	  });
+	}
+
+	var logTypes = {
+	  's': {
+	    event: 'Success Login',
+	    level: 1 // Info
+	  },
+	  'seacft': {
+	    event: 'Success Exchange',
+	    level: 1 // Info
+	  },
+	  'feacft': {
+	    event: 'Failed Exchange',
+	    level: 3 // Error
+	  },
+	  'f': {
+	    event: 'Failed Login',
+	    level: 3 // Error
+	  },
+	  'w': {
+	    event: 'Warnings During Login',
+	    level: 2 // Warning
+	  },
+	  'du': {
+	    event: 'Deleted User',
+	    level: 1 // Info
+	  },
+	  'fu': {
+	    event: 'Failed Login (invalid email/username)',
+	    level: 3 // Error
+	  },
+	  'fp': {
+	    event: 'Failed Login (wrong password)',
+	    level: 3 // Error
+	  },
+	  'fc': {
+	    event: 'Failed by Connector',
+	    level: 3 // Error
+	  },
+	  'fco': {
+	    event: 'Failed by CORS',
+	    level: 3 // Error
+	  },
+	  'con': {
+	    event: 'Connector Online',
+	    level: 1 // Info
+	  },
+	  'coff': {
+	    event: 'Connector Offline',
+	    level: 3 // Error
+	  },
+	  'fcpro': {
+	    event: 'Failed Connector Provisioning',
+	    level: 4 // Critical
+	  },
+	  'ss': {
+	    event: 'Success Signup',
+	    level: 1 // Info
+	  },
+	  'fs': {
+	    event: 'Failed Signup',
+	    level: 3 // Error
+	  },
+	  'cs': {
+	    event: 'Code Sent',
+	    level: 0 // Debug
+	  },
+	  'cls': {
+	    event: 'Code/Link Sent',
+	    level: 0 // Debug
+	  },
+	  'sv': {
+	    event: 'Success Verification Email',
+	    level: 0 // Debug
+	  },
+	  'fv': {
+	    event: 'Failed Verification Email',
+	    level: 0 // Debug
+	  },
+	  'scp': {
+	    event: 'Success Change Password',
+	    level: 1 // Info
+	  },
+	  'fcp': {
+	    event: 'Failed Change Password',
+	    level: 3 // Error
+	  },
+	  'sce': {
+	    event: 'Success Change Email',
+	    level: 1 // Info
+	  },
+	  'fce': {
+	    event: 'Failed Change Email',
+	    level: 3 // Error
+	  },
+	  'scu': {
+	    event: 'Success Change Username',
+	    level: 1 // Info
+	  },
+	  'fcu': {
+	    event: 'Failed Change Username',
+	    level: 3 // Error
+	  },
+	  'scpn': {
+	    event: 'Success Change Phone Number',
+	    level: 1 // Info
+	  },
+	  'fcpn': {
+	    event: 'Failed Change Phone Number',
+	    level: 3 // Error
+	  },
+	  'svr': {
+	    event: 'Success Verification Email Request',
+	    level: 0 // Debug
+	  },
+	  'fvr': {
+	    event: 'Failed Verification Email Request',
+	    level: 3 // Error
+	  },
+	  'scpr': {
+	    event: 'Success Change Password Request',
+	    level: 0 // Debug
+	  },
+	  'fcpr': {
+	    event: 'Failed Change Password Request',
+	    level: 3 // Error
+	  },
+	  'fn': {
+	    event: 'Failed Sending Notification',
+	    level: 3 // Error
+	  },
+	  'sapi': {
+	    event: 'API Operation'
+	  },
+	  'fapi': {
+	    event: 'Failed API Operation'
+	  },
+	  'limit_wc': {
+	    event: 'Blocked Account',
+	    level: 4 // Critical
+	  },
+	  'limit_ui': {
+	    event: 'Too Many Calls to /userinfo',
+	    level: 4 // Critical
+	  },
+	  'api_limit': {
+	    event: 'Rate Limit On API',
+	    level: 4 // Critical
+	  },
+	  'sdu': {
+	    event: 'Successful User Deletion',
+	    level: 1 // Info
+	  },
+	  'fdu': {
+	    event: 'Failed User Deletion',
+	    level: 3 // Error
+	  }
+	};
+
+	function getLogsFromAuth0(domain, token, take, from, cb) {
+	  var url = 'https://' + domain + '/api/v2/logs';
+
+	  Request.get(url).set('Authorization', 'Bearer ' + token).set('Accept', 'application/json').query({ take: take }).query({ from: from }).query({ sort: 'date:1' }).query({ per_page: take }).end(function (err, res) {
+	    if (err || !res.ok) {
+	      console.log('Error getting logs', err);
+	      cb(null, err);
+	    } else {
+	      console.log('x-ratelimit-limit: ', res.headers['x-ratelimit-limit']);
+	      console.log('x-ratelimit-remaining: ', res.headers['x-ratelimit-remaining']);
+	      console.log('x-ratelimit-reset: ', res.headers['x-ratelimit-reset']);
+	      cb(res.body);
+	    }
+	  });
+	}
+
+	var getTokenCached = memoizer({
+	  load: function load(apiUrl, audience, clientId, clientSecret, cb) {
+	    Request.post(apiUrl).send({
+	      audience: audience,
+	      grant_type: 'client_credentials',
+	      client_id: clientId,
+	      client_secret: clientSecret
+	    }).type('application/json').end(function (err, res) {
+	      if (err || !res.ok) {
+	        cb(null, err);
+	      } else {
+	        cb(res.body.access_token);
+	      }
+	    });
+	  },
+	  hash: function hash(apiUrl) {
+	    return apiUrl;
+	  },
+	  max: 100,
+	  maxAge: 1000 * 60 * 60
+	});
+
+	app.use(function (req, res, next) {
+	  var apiUrl = 'https://' + req.webtaskContext.data.AUTH0_DOMAIN + '/oauth/token';
+	  var audience = 'https://' + req.webtaskContext.data.AUTH0_DOMAIN + '/api/v2/';
+	  var clientId = req.webtaskContext.data.AUTH0_CLIENT_ID;
+	  var clientSecret = req.webtaskContext.data.AUTH0_CLIENT_SECRET;
+
+	  getTokenCached(apiUrl, audience, clientId, clientSecret, function (access_token, err) {
+	    if (err) {
+	      console.log('Error getting access_token', err);
+	      return next(err);
+	    }
+
+	    req.access_token = access_token;
+	    next();
+	  });
+	});
+
+	app.get('/', lastLogCheckpoint);
+	app.post('/', lastLogCheckpoint);
+
+	module.exports = Webtask.fromExpress(app);
+
+/***/ },
+/* 1 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/*
+	 * loggly.js: Wrapper for node-loggly object
 	 *
-	 * @author   Feross Aboukhadijeh <feross@feross.org> <http://feross.org>
-	 * @license  MIT
+	 * (C) 2010 Charlie Robbins
+	 * MIT LICENSE
+	 *
 	 */
-"use strict";function o(){function t(){}try{var e=new Uint8Array(1);return e.foo=function(){return 42},e.constructor=t,42===e.foo()&&e.constructor===t&&"function"==typeof e.subarray&&0===e.subarray(1,1).byteLength}catch(n){return!1}}function i(){return t.TYPED_ARRAY_SUPPORT?2147483647:1073741823}function t(e){return this instanceof t?(t.TYPED_ARRAY_SUPPORT||(this.length=0,this.parent=void 0),"number"==typeof e?s(this,e):"string"==typeof e?a(this,e,arguments.length>1?arguments[1]:"utf8"):u(this,e)):arguments.length>1?new t(e,arguments[1]):new t(e)}function s(e,n){if(e=g(e,0>n?0:0|y(n)),!t.TYPED_ARRAY_SUPPORT)for(var r=0;n>r;r++)e[r]=0;return e}function a(t,e,n){"string"==typeof n&&""!==n||(n="utf8");var r=0|v(e,n);return t=g(t,r),t.write(e,n),t}function u(e,n){if(t.isBuffer(n))return l(e,n);if(K(n))return c(e,n);if(null==n)throw new TypeError("must start with number, buffer, array or string");if("undefined"!=typeof ArrayBuffer){if(n.buffer instanceof ArrayBuffer)return f(e,n);if(n instanceof ArrayBuffer)return h(e,n)}return n.length?p(e,n):d(e,n)}function l(t,e){var n=0|y(e.length);return t=g(t,n),e.copy(t,0,0,n),t}function c(t,e){var n=0|y(e.length);t=g(t,n);for(var r=0;n>r;r+=1)t[r]=255&e[r];return t}function f(t,e){var n=0|y(e.length);t=g(t,n);for(var r=0;n>r;r+=1)t[r]=255&e[r];return t}function h(e,n){return t.TYPED_ARRAY_SUPPORT?(n.byteLength,e=t._augment(new Uint8Array(n))):e=f(e,new Uint8Array(n)),e}function p(t,e){var n=0|y(e.length);t=g(t,n);for(var r=0;n>r;r+=1)t[r]=255&e[r];return t}function d(t,e){var n,r=0;"Buffer"===e.type&&K(e.data)&&(n=e.data,r=0|y(n.length)),t=g(t,r);for(var o=0;r>o;o+=1)t[o]=255&n[o];return t}function g(e,n){t.TYPED_ARRAY_SUPPORT?(e=t._augment(new Uint8Array(n)),e.__proto__=t.prototype):(e.length=n,e._isBuffer=!0);var r=0!==n&&n<=t.poolSize>>>1;return r&&(e.parent=W),e}function y(t){if(t>=i())throw new RangeError("Attempt to allocate Buffer larger than maximum size: 0x"+i().toString(16)+" bytes");return 0|t}function m(e,n){if(!(this instanceof m))return new m(e,n);var r=new t(e,n);return delete r.parent,r}function v(t,e){"string"!=typeof t&&(t=""+t);var n=t.length;if(0===n)return 0;for(var r=!1;;)switch(e){case"ascii":case"binary":case"raw":case"raws":return n;case"utf8":case"utf-8":return G(t).length;case"ucs2":case"ucs-2":case"utf16le":case"utf-16le":return 2*n;case"hex":return n>>>1;case"base64":return J(t).length;default:if(r)return G(t).length;e=(""+e).toLowerCase(),r=!0}}function w(t,e,n){var r=!1;if(e=0|e,n=void 0===n||n===1/0?this.length:0|n,t||(t="utf8"),0>e&&(e=0),n>this.length&&(n=this.length),e>=n)return"";for(;;)switch(t){case"hex":return B(this,e,n);case"utf8":case"utf-8":return R(this,e,n);case"ascii":return S(this,e,n);case"binary":return L(this,e,n);case"base64":return x(this,e,n);case"ucs2":case"ucs-2":case"utf16le":case"utf-16le":return P(this,e,n);default:if(r)throw new TypeError("Unknown encoding: "+t);t=(t+"").toLowerCase(),r=!0}}function E(t,e,n,r){n=Number(n)||0;var o=t.length-n;r?(r=Number(r),r>o&&(r=o)):r=o;var i=e.length;if(i%2!==0)throw new Error("Invalid hex string");r>i/2&&(r=i/2);for(var s=0;r>s;s++){var a=parseInt(e.substr(2*s,2),16);if(isNaN(a))throw new Error("Invalid hex string");t[n+s]=a}return s}function b(t,e,n,r){return V(G(e,t.length-n),t,n,r)}function _(t,e,n,r){return V(z(e),t,n,r)}function I(t,e,n,r){return _(t,e,n,r)}function T(t,e,n,r){return V(J(e),t,n,r)}function A(t,e,n,r){return V(H(e,t.length-n),t,n,r)}function x(t,e,n){return 0===e&&n===t.length?X.fromByteArray(t):X.fromByteArray(t.slice(e,n))}function R(t,e,n){n=Math.min(t.length,n);for(var r=[],o=e;n>o;){var i=t[o],s=null,a=i>239?4:i>223?3:i>191?2:1;if(n>=o+a){var u,l,c,f;switch(a){case 1:128>i&&(s=i);break;case 2:u=t[o+1],128===(192&u)&&(f=(31&i)<<6|63&u,f>127&&(s=f));break;case 3:u=t[o+1],l=t[o+2],128===(192&u)&&128===(192&l)&&(f=(15&i)<<12|(63&u)<<6|63&l,f>2047&&(55296>f||f>57343)&&(s=f));break;case 4:u=t[o+1],l=t[o+2],c=t[o+3],128===(192&u)&&128===(192&l)&&128===(192&c)&&(f=(15&i)<<18|(63&u)<<12|(63&l)<<6|63&c,f>65535&&1114112>f&&(s=f))}}null===s?(s=65533,a=1):s>65535&&(s-=65536,r.push(s>>>10&1023|55296),s=56320|1023&s),r.push(s),o+=a}return U(r)}function U(t){var e=t.length;if($>=e)return String.fromCharCode.apply(String,t);for(var n="",r=0;e>r;)n+=String.fromCharCode.apply(String,t.slice(r,r+=$));return n}function S(t,e,n){var r="";n=Math.min(t.length,n);for(var o=e;n>o;o++)r+=String.fromCharCode(127&t[o]);return r}function L(t,e,n){var r="";n=Math.min(t.length,n);for(var o=e;n>o;o++)r+=String.fromCharCode(t[o]);return r}function B(t,e,n){var r=t.length;(!e||0>e)&&(e=0),(!n||0>n||n>r)&&(n=r);for(var o="",i=e;n>i;i++)o+=N(t[i]);return o}function P(t,e,n){for(var r=t.slice(e,n),o="",i=0;i<r.length;i+=2)o+=String.fromCharCode(r[i]+256*r[i+1]);return o}function O(t,e,n){if(t%1!==0||0>t)throw new RangeError("offset is not uint");if(t+e>n)throw new RangeError("Trying to access beyond buffer length")}function C(e,n,r,o,i,s){if(!t.isBuffer(e))throw new TypeError("buffer must be a Buffer instance");if(n>i||s>n)throw new RangeError("value is out of bounds");if(r+o>e.length)throw new RangeError("index out of range")}function D(t,e,n,r){0>e&&(e=65535+e+1);for(var o=0,i=Math.min(t.length-n,2);i>o;o++)t[n+o]=(e&255<<8*(r?o:1-o))>>>8*(r?o:1-o)}function k(t,e,n,r){0>e&&(e=4294967295+e+1);for(var o=0,i=Math.min(t.length-n,4);i>o;o++)t[n+o]=e>>>8*(r?o:3-o)&255}function M(t,e,n,r,o,i){if(e>o||i>e)throw new RangeError("value is out of bounds");if(n+r>t.length)throw new RangeError("index out of range");if(0>n)throw new RangeError("index out of range")}function Y(t,e,n,r,o){return o||M(t,e,n,4,3.4028234663852886e38,-3.4028234663852886e38),Z.write(t,e,n,r,23,4),n+4}function F(t,e,n,r,o){return o||M(t,e,n,8,1.7976931348623157e308,-1.7976931348623157e308),Z.write(t,e,n,r,52,8),n+8}function j(t){if(t=q(t).replace(tt,""),t.length<2)return"";for(;t.length%4!==0;)t+="=";return t}function q(t){return t.trim?t.trim():t.replace(/^\s+|\s+$/g,"")}function N(t){return 16>t?"0"+t.toString(16):t.toString(16)}function G(t,e){e=e||1/0;for(var n,r=t.length,o=null,i=[],s=0;r>s;s++){if(n=t.charCodeAt(s),n>55295&&57344>n){if(!o){if(n>56319){(e-=3)>-1&&i.push(239,191,189);continue}if(s+1===r){(e-=3)>-1&&i.push(239,191,189);continue}o=n;continue}if(56320>n){(e-=3)>-1&&i.push(239,191,189),o=n;continue}n=(o-55296<<10|n-56320)+65536}else o&&(e-=3)>-1&&i.push(239,191,189);if(o=null,128>n){if((e-=1)<0)break;i.push(n)}else if(2048>n){if((e-=2)<0)break;i.push(n>>6|192,63&n|128)}else if(65536>n){if((e-=3)<0)break;i.push(n>>12|224,n>>6&63|128,63&n|128)}else{if(!(1114112>n))throw new Error("Invalid code point");if((e-=4)<0)break;i.push(n>>18|240,n>>12&63|128,n>>6&63|128,63&n|128)}}return i}function z(t){for(var e=[],n=0;n<t.length;n++)e.push(255&t.charCodeAt(n));return e}function H(t,e){for(var n,r,o,i=[],s=0;s<t.length&&!((e-=2)<0);s++)n=t.charCodeAt(s),r=n>>8,o=n%256,i.push(o),i.push(r);return i}function J(t){return X.toByteArray(j(t))}function V(t,e,n,r){for(var o=0;r>o&&!(o+n>=e.length||o>=t.length);o++)e[o+n]=t[o];return o}var X=n(7),Z=n(8),K=n(9);e.Buffer=t,e.SlowBuffer=m,e.INSPECT_MAX_BYTES=50,t.poolSize=8192;var W={};t.TYPED_ARRAY_SUPPORT=void 0!==r.TYPED_ARRAY_SUPPORT?r.TYPED_ARRAY_SUPPORT:o(),t.TYPED_ARRAY_SUPPORT?(t.prototype.__proto__=Uint8Array.prototype,t.__proto__=Uint8Array):(t.prototype.length=void 0,t.prototype.parent=void 0),t.isBuffer=function(t){return!(null==t||!t._isBuffer)},t.compare=function(e,n){if(!t.isBuffer(e)||!t.isBuffer(n))throw new TypeError("Arguments must be Buffers");if(e===n)return 0;for(var r=e.length,o=n.length,i=0,s=Math.min(r,o);s>i&&e[i]===n[i];)++i;return i!==s&&(r=e[i],o=n[i]),o>r?-1:r>o?1:0},t.isEncoding=function(t){switch(String(t).toLowerCase()){case"hex":case"utf8":case"utf-8":case"ascii":case"binary":case"base64":case"raw":case"ucs2":case"ucs-2":case"utf16le":case"utf-16le":return!0;default:return!1}},t.concat=function(e,n){if(!K(e))throw new TypeError("list argument must be an Array of Buffers.");if(0===e.length)return new t(0);var r;if(void 0===n)for(n=0,r=0;r<e.length;r++)n+=e[r].length;var o=new t(n),i=0;for(r=0;r<e.length;r++){var s=e[r];s.copy(o,i),i+=s.length}return o},t.byteLength=v,t.prototype.toString=function(){var t=0|this.length;return 0===t?"":0===arguments.length?R(this,0,t):w.apply(this,arguments)},t.prototype.equals=function(e){if(!t.isBuffer(e))throw new TypeError("Argument must be a Buffer");return this===e?!0:0===t.compare(this,e)},t.prototype.inspect=function(){var t="",n=e.INSPECT_MAX_BYTES;return this.length>0&&(t=this.toString("hex",0,n).match(/.{2}/g).join(" "),this.length>n&&(t+=" ... ")),"<Buffer "+t+">"},t.prototype.compare=function(e){if(!t.isBuffer(e))throw new TypeError("Argument must be a Buffer");return this===e?0:t.compare(this,e)},t.prototype.indexOf=function(e,n){function r(t,e,n){for(var r=-1,o=0;n+o<t.length;o++)if(t[n+o]===e[-1===r?0:o-r]){if(-1===r&&(r=o),o-r+1===e.length)return n+r}else r=-1;return-1}if(n>2147483647?n=2147483647:-2147483648>n&&(n=-2147483648),n>>=0,0===this.length)return-1;if(n>=this.length)return-1;if(0>n&&(n=Math.max(this.length+n,0)),"string"==typeof e)return 0===e.length?-1:String.prototype.indexOf.call(this,e,n);if(t.isBuffer(e))return r(this,e,n);if("number"==typeof e)return t.TYPED_ARRAY_SUPPORT&&"function"===Uint8Array.prototype.indexOf?Uint8Array.prototype.indexOf.call(this,e,n):r(this,[e],n);throw new TypeError("val must be string, number or Buffer")},t.prototype.get=function(t){return console.log(".get() is deprecated. Access using array indexes instead."),this.readUInt8(t)},t.prototype.set=function(t,e){return console.log(".set() is deprecated. Access using array indexes instead."),this.writeUInt8(t,e)},t.prototype.write=function(t,e,n,r){if(void 0===e)r="utf8",n=this.length,e=0;else if(void 0===n&&"string"==typeof e)r=e,n=this.length,e=0;else if(isFinite(e))e=0|e,isFinite(n)?(n=0|n,void 0===r&&(r="utf8")):(r=n,n=void 0);else{var o=r;r=e,e=0|n,n=o}var i=this.length-e;if((void 0===n||n>i)&&(n=i),t.length>0&&(0>n||0>e)||e>this.length)throw new RangeError("attempt to write outside buffer bounds");r||(r="utf8");for(var s=!1;;)switch(r){case"hex":return E(this,t,e,n);case"utf8":case"utf-8":return b(this,t,e,n);case"ascii":return _(this,t,e,n);case"binary":return I(this,t,e,n);case"base64":return T(this,t,e,n);case"ucs2":case"ucs-2":case"utf16le":case"utf-16le":return A(this,t,e,n);default:if(s)throw new TypeError("Unknown encoding: "+r);r=(""+r).toLowerCase(),s=!0}},t.prototype.toJSON=function(){return{type:"Buffer",data:Array.prototype.slice.call(this._arr||this,0)}};var $=4096;t.prototype.slice=function(e,n){var r=this.length;e=~~e,n=void 0===n?r:~~n,0>e?(e+=r,0>e&&(e=0)):e>r&&(e=r),0>n?(n+=r,0>n&&(n=0)):n>r&&(n=r),e>n&&(n=e);var o;if(t.TYPED_ARRAY_SUPPORT)o=t._augment(this.subarray(e,n));else{var i=n-e;o=new t(i,void 0);for(var s=0;i>s;s++)o[s]=this[s+e]}return o.length&&(o.parent=this.parent||this),o},t.prototype.readUIntLE=function(t,e,n){t=0|t,e=0|e,n||O(t,e,this.length);for(var r=this[t],o=1,i=0;++i<e&&(o*=256);)r+=this[t+i]*o;return r},t.prototype.readUIntBE=function(t,e,n){t=0|t,e=0|e,n||O(t,e,this.length);for(var r=this[t+--e],o=1;e>0&&(o*=256);)r+=this[t+--e]*o;return r},t.prototype.readUInt8=function(t,e){return e||O(t,1,this.length),this[t]},t.prototype.readUInt16LE=function(t,e){return e||O(t,2,this.length),this[t]|this[t+1]<<8},t.prototype.readUInt16BE=function(t,e){return e||O(t,2,this.length),this[t]<<8|this[t+1]},t.prototype.readUInt32LE=function(t,e){return e||O(t,4,this.length),(this[t]|this[t+1]<<8|this[t+2]<<16)+16777216*this[t+3]},t.prototype.readUInt32BE=function(t,e){return e||O(t,4,this.length),16777216*this[t]+(this[t+1]<<16|this[t+2]<<8|this[t+3])},t.prototype.readIntLE=function(t,e,n){t=0|t,e=0|e,n||O(t,e,this.length);for(var r=this[t],o=1,i=0;++i<e&&(o*=256);)r+=this[t+i]*o;return o*=128,r>=o&&(r-=Math.pow(2,8*e)),r},t.prototype.readIntBE=function(t,e,n){t=0|t,e=0|e,n||O(t,e,this.length);for(var r=e,o=1,i=this[t+--r];r>0&&(o*=256);)i+=this[t+--r]*o;return o*=128,i>=o&&(i-=Math.pow(2,8*e)),i},t.prototype.readInt8=function(t,e){return e||O(t,1,this.length),128&this[t]?-1*(255-this[t]+1):this[t]},t.prototype.readInt16LE=function(t,e){e||O(t,2,this.length);var n=this[t]|this[t+1]<<8;return 32768&n?4294901760|n:n},t.prototype.readInt16BE=function(t,e){e||O(t,2,this.length);var n=this[t+1]|this[t]<<8;return 32768&n?4294901760|n:n},t.prototype.readInt32LE=function(t,e){return e||O(t,4,this.length),this[t]|this[t+1]<<8|this[t+2]<<16|this[t+3]<<24},t.prototype.readInt32BE=function(t,e){return e||O(t,4,this.length),this[t]<<24|this[t+1]<<16|this[t+2]<<8|this[t+3]},t.prototype.readFloatLE=function(t,e){return e||O(t,4,this.length),Z.read(this,t,!0,23,4)},t.prototype.readFloatBE=function(t,e){return e||O(t,4,this.length),Z.read(this,t,!1,23,4)},t.prototype.readDoubleLE=function(t,e){return e||O(t,8,this.length),Z.read(this,t,!0,52,8)},t.prototype.readDoubleBE=function(t,e){return e||O(t,8,this.length),Z.read(this,t,!1,52,8)},t.prototype.writeUIntLE=function(t,e,n,r){t=+t,e=0|e,n=0|n,r||C(this,t,e,n,Math.pow(2,8*n),0);var o=1,i=0;for(this[e]=255&t;++i<n&&(o*=256);)this[e+i]=t/o&255;return e+n},t.prototype.writeUIntBE=function(t,e,n,r){t=+t,e=0|e,n=0|n,r||C(this,t,e,n,Math.pow(2,8*n),0);var o=n-1,i=1;for(this[e+o]=255&t;--o>=0&&(i*=256);)this[e+o]=t/i&255;return e+n},t.prototype.writeUInt8=function(e,n,r){return e=+e,n=0|n,r||C(this,e,n,1,255,0),t.TYPED_ARRAY_SUPPORT||(e=Math.floor(e)),this[n]=255&e,n+1},t.prototype.writeUInt16LE=function(e,n,r){return e=+e,n=0|n,r||C(this,e,n,2,65535,0),t.TYPED_ARRAY_SUPPORT?(this[n]=255&e,this[n+1]=e>>>8):D(this,e,n,!0),n+2},t.prototype.writeUInt16BE=function(e,n,r){return e=+e,n=0|n,r||C(this,e,n,2,65535,0),t.TYPED_ARRAY_SUPPORT?(this[n]=e>>>8,this[n+1]=255&e):D(this,e,n,!1),n+2},t.prototype.writeUInt32LE=function(e,n,r){return e=+e,n=0|n,r||C(this,e,n,4,4294967295,0),t.TYPED_ARRAY_SUPPORT?(this[n+3]=e>>>24,this[n+2]=e>>>16,this[n+1]=e>>>8,this[n]=255&e):k(this,e,n,!0),n+4},t.prototype.writeUInt32BE=function(e,n,r){return e=+e,n=0|n,r||C(this,e,n,4,4294967295,0),t.TYPED_ARRAY_SUPPORT?(this[n]=e>>>24,this[n+1]=e>>>16,this[n+2]=e>>>8,this[n+3]=255&e):k(this,e,n,!1),n+4},t.prototype.writeIntLE=function(t,e,n,r){if(t=+t,e=0|e,!r){var o=Math.pow(2,8*n-1);C(this,t,e,n,o-1,-o)}var i=0,s=1,a=0>t?1:0;for(this[e]=255&t;++i<n&&(s*=256);)this[e+i]=(t/s>>0)-a&255;return e+n},t.prototype.writeIntBE=function(t,e,n,r){if(t=+t,e=0|e,!r){var o=Math.pow(2,8*n-1);C(this,t,e,n,o-1,-o)}var i=n-1,s=1,a=0>t?1:0;for(this[e+i]=255&t;--i>=0&&(s*=256);)this[e+i]=(t/s>>0)-a&255;return e+n},t.prototype.writeInt8=function(e,n,r){return e=+e,n=0|n,r||C(this,e,n,1,127,-128),t.TYPED_ARRAY_SUPPORT||(e=Math.floor(e)),0>e&&(e=255+e+1),this[n]=255&e,n+1},t.prototype.writeInt16LE=function(e,n,r){return e=+e,n=0|n,r||C(this,e,n,2,32767,-32768),t.TYPED_ARRAY_SUPPORT?(this[n]=255&e,this[n+1]=e>>>8):D(this,e,n,!0),n+2},t.prototype.writeInt16BE=function(e,n,r){return e=+e,n=0|n,r||C(this,e,n,2,32767,-32768),t.TYPED_ARRAY_SUPPORT?(this[n]=e>>>8,this[n+1]=255&e):D(this,e,n,!1),n+2},t.prototype.writeInt32LE=function(e,n,r){return e=+e,n=0|n,r||C(this,e,n,4,2147483647,-2147483648),t.TYPED_ARRAY_SUPPORT?(this[n]=255&e,this[n+1]=e>>>8,this[n+2]=e>>>16,this[n+3]=e>>>24):k(this,e,n,!0),n+4},t.prototype.writeInt32BE=function(e,n,r){return e=+e,n=0|n,r||C(this,e,n,4,2147483647,-2147483648),0>e&&(e=4294967295+e+1),t.TYPED_ARRAY_SUPPORT?(this[n]=e>>>24,this[n+1]=e>>>16,this[n+2]=e>>>8,this[n+3]=255&e):k(this,e,n,!1),n+4},t.prototype.writeFloatLE=function(t,e,n){return Y(this,t,e,!0,n)},t.prototype.writeFloatBE=function(t,e,n){return Y(this,t,e,!1,n)},t.prototype.writeDoubleLE=function(t,e,n){return F(this,t,e,!0,n)},t.prototype.writeDoubleBE=function(t,e,n){return F(this,t,e,!1,n)},t.prototype.copy=function(e,n,r,o){if(r||(r=0),o||0===o||(o=this.length),n>=e.length&&(n=e.length),n||(n=0),o>0&&r>o&&(o=r),o===r)return 0;if(0===e.length||0===this.length)return 0;if(0>n)throw new RangeError("targetStart out of bounds");if(0>r||r>=this.length)throw new RangeError("sourceStart out of bounds");if(0>o)throw new RangeError("sourceEnd out of bounds");o>this.length&&(o=this.length),e.length-n<o-r&&(o=e.length-n+r);var i,s=o-r;if(this===e&&n>r&&o>n)for(i=s-1;i>=0;i--)e[i+n]=this[i+r];else if(1e3>s||!t.TYPED_ARRAY_SUPPORT)for(i=0;s>i;i++)e[i+n]=this[i+r];else e._set(this.subarray(r,r+s),n);return s},t.prototype.fill=function(t,e,n){if(t||(t=0),e||(e=0),n||(n=this.length),e>n)throw new RangeError("end < start");if(n!==e&&0!==this.length){if(0>e||e>=this.length)throw new RangeError("start out of bounds");if(0>n||n>this.length)throw new RangeError("end out of bounds");var r;if("number"==typeof t)for(r=e;n>r;r++)this[r]=t;else{var o=G(t.toString()),i=o.length;for(r=e;n>r;r++)this[r]=o[r%i]}return this}},t.prototype.toArrayBuffer=function(){if("undefined"!=typeof Uint8Array){if(t.TYPED_ARRAY_SUPPORT)return new t(this).buffer;for(var e=new Uint8Array(this.length),n=0,r=e.length;r>n;n+=1)e[n]=this[n];return e.buffer}throw new TypeError("Buffer.toArrayBuffer not supported in this browser")};var Q=t.prototype;t._augment=function(e){return e.constructor=t,e._isBuffer=!0,e._set=e.set,e.get=Q.get,e.set=Q.set,e.write=Q.write,e.toString=Q.toString,e.toLocaleString=Q.toString,e.toJSON=Q.toJSON,e.equals=Q.equals,e.compare=Q.compare,e.indexOf=Q.indexOf,e.copy=Q.copy,e.slice=Q.slice,e.readUIntLE=Q.readUIntLE,e.readUIntBE=Q.readUIntBE,e.readUInt8=Q.readUInt8,e.readUInt16LE=Q.readUInt16LE,e.readUInt16BE=Q.readUInt16BE,e.readUInt32LE=Q.readUInt32LE,e.readUInt32BE=Q.readUInt32BE,e.readIntLE=Q.readIntLE,e.readIntBE=Q.readIntBE,e.readInt8=Q.readInt8,e.readInt16LE=Q.readInt16LE,e.readInt16BE=Q.readInt16BE,e.readInt32LE=Q.readInt32LE,e.readInt32BE=Q.readInt32BE,e.readFloatLE=Q.readFloatLE,e.readFloatBE=Q.readFloatBE,e.readDoubleLE=Q.readDoubleLE,e.readDoubleBE=Q.readDoubleBE,e.writeUInt8=Q.writeUInt8,e.writeUIntLE=Q.writeUIntLE,e.writeUIntBE=Q.writeUIntBE,e.writeUInt16LE=Q.writeUInt16LE,e.writeUInt16BE=Q.writeUInt16BE,e.writeUInt32LE=Q.writeUInt32LE,e.writeUInt32BE=Q.writeUInt32BE,e.writeIntLE=Q.writeIntLE,e.writeIntBE=Q.writeIntBE,e.writeInt8=Q.writeInt8,e.writeInt16LE=Q.writeInt16LE,e.writeInt16BE=Q.writeInt16BE,e.writeInt32LE=Q.writeInt32LE,e.writeInt32BE=Q.writeInt32BE,e.writeFloatLE=Q.writeFloatLE,e.writeFloatBE=Q.writeFloatBE,e.writeDoubleLE=Q.writeDoubleLE,e.writeDoubleBE=Q.writeDoubleBE,e.fill=Q.fill,e.inspect=Q.inspect,e.toArrayBuffer=Q.toArrayBuffer,e};var tt=/[^+\/0-9A-Za-z-_]/g}).call(e,n(6).Buffer,function(){return this}())},function(t,e){t.exports=require("base64-js")},function(t,e){t.exports=require("ieee754")},function(t,e){t.exports=require("isarray")},function(t,e){t.exports=require("events")},function(t,e){t.exports=require("util")},function(t,e){t.exports=require("querystring")},function(t,e,n){(function(t){var r=(n(14),n(11),n(15)),o=(n(3),e),i=o.failCodes={400:"Bad Request",401:"Unauthorized",403:"Forbidden",404:"Not Found",409:"Conflict / Duplicate",410:"Gone",500:"Internal Server Error",501:"Not Implemented",503:"Throttled"};o.successCodes={200:"OK",201:"Created",202:"Accepted",203:"Non-authoritative information",204:"Deleted"};o.loggly=function(){function e(t){n||(n=!0,p&&p(t))}var n,o,s,a,u,l,c,f=Array.prototype.slice.call(arguments),h=f.pop(),p=f.pop();1===f.length?"string"==typeof f[0]?(a="GET",c=f[0]):(a=f[0].method||"GET",c=f[0].uri,o=f[0].body,u=f[0].auth,s=f[0].headers,l=f[0].proxy):2===f.length?(a="GET",c=f[0],u=f[1]):(a=f[0],c=f[1],u=f[2]);var d={uri:c,method:a,headers:s||{},proxy:l};u&&(d.headers.authorization="Basic "+new t(u.username+":"+u.password).toString("base64")),o&&(d.body=o);try{r(d,function(t,n,r){if(t)return e(t);var o=n.statusCode.toString();return-1!==Object.keys(i).indexOf(o)?e(new Error("Loggly Error ("+o+"): "+i[o])):void h(n,r)})}catch(g){e(g)}},o.serialize=function(t,e){if(null===t?t="null":void 0===t?t="undefined":t===!1&&(t="false"),"object"!=typeof t)return e?e+"="+t:t;for(var n="",r=Object.keys(t),i=r.length,s=0;i>s;s++){if(Array.isArray(t[r[s]])){n+=r[s]+"=[";for(var a=0,u=t[r[s]].length;u>a;a++)n+=o.serialize(t[r[s]][a]),u-1>a&&(n+=", ");n+="]"}else n+=o.serialize(t[r[s]],r[s]);i-1>s&&(n+=", ")}return n},o.clone=function(t){var e={};for(var n in t)e[n]=t[n]instanceof Object?o.clone(t[n]):t[n];return e}}).call(e,n(6).Buffer)},function(t,e){t.exports=require("https")},function(t,e){t.exports=require("request")},function(t,e,n){var r=n(10),o=n(11),i=n(12),s=n(17),a=n(13),u=e.Search=function(t,e){if(!t||!t.query&&!t.q)throw new Error("options.query is required to execute a Loggly search.");r.EventEmitter.call(this),t.query&&(t.q=t.query,delete t.query),this.options=t,this.client=e,t.callback&&(this.callback=t.callback,delete t.callback,this.run())};o.inherits(u,r.EventEmitter),u.prototype.run=function(t){function e(){r||(r=!0,o.callback.apply(null,arguments))}function n(t){return t&&t.id?void a.loggly({uri:o.client.logglyUrl("events?"+i.stringify({rsid:t.id})),auth:o.client.auth,json:!0},e,function(t,n){var r;try{r=JSON.parse(n)}catch(o){return e(o)}e(null,r)}):e(t)}var r,o=this;if(this.options.q.trim(),this.callback=t||this.callback,!this.callback)throw new Error("Cannot run search without a callback function.");return this._checkRange(),a.loggly({uri:this.client.logglyUrl("search?"+i.stringify(this.options)),auth:this.client.auth,json:!0},this.callback,function(t,e){var r;try{r=JSON.parse(e).rsid}catch(i){r=i}o.emit("rsid",r),n(r)}),this},u.prototype._checkRange=function(){return this.options.until||this.options.from?(this.options.until=this.options.until||"now",this.options.from=this.options.from||"-24h",s.parseDate(this.options.until)||(this.options.until="now"),s.parseDate(this.options.from)||(this.options.from="-24h"),(s.fromDates(this.options.from,this.options.until)<0||this.options.until===this.options.from)&&(this.options.until="now",this.options.from="-24h"),this):void 0}},function(t,e){function n(t){return t&&!isNaN(parseFloat(t))&&isFinite(t)}function r(t,e,n){var r=n.current,o=n.next,i=n.max,s=t>0?Math.floor:Math.ceil;return t&&(e[o]+=s.call(null,t/i),e[r]+=t%i),Math.abs(e[r])>=i&&(e[o]+=s.call(null,e[r]/i),e[r]=e[r]%i),e}function o(t,e){return(e%100!==0&&e%4===0||e%400===0)&&1===t?29:d[t]}var i=1e3,s=6e4,a=36e5,u=864e5,l=/^(\d+):(\d+):(\d+):(\d+)(\.\d+)?/,c=/^(\d+):(\d+):(\d+)(\.\d+)?/,f=e.TimeSpan=function(t,e,r,o,l){this.msecs=0,n(l)&&(this.msecs+=l*u),n(o)&&(this.msecs+=o*a),n(r)&&(this.msecs+=r*s),n(e)&&(this.msecs+=e*i),n(t)&&(this.msecs+=t)};e.fromMilliseconds=function(t){return n(t)?new f(t,0,0,0,0):void 0},e.fromSeconds=function(t){return n(t)?new f(0,t,0,0,0):void 0},e.fromMinutes=function(t){return n(t)?new f(0,0,t,0,0):void 0},e.fromHours=function(t){return n(t)?new f(0,0,0,t,0):void 0},e.fromDays=function(t){return n(t)?new f(0,0,0,0,t):void 0},e.parse=function(t){function e(t){return t?1e3*parseFloat("0"+t):0}var n;return(n=t.match(l))?new f(e(n[5]),n[4],n[3],n[2],n[1]):(n=t.match(c))?new f(e(n[4]),n[3],n[2],n[1],0):null};var h={milliseconds:{exp:/(\d+)milli(?:second)?[s]?/i,compute:function(t,e){return r(t,e,{current:"milliseconds",next:"seconds",max:1e3})}},seconds:{exp:/(\d+)second[s]?/i,compute:function(t,e){return r(t,e,{current:"seconds",next:"minutes",max:60})}},minutes:{exp:/(\d+)minute[s]?/i,compute:function(t,e){return r(t,e,{current:"minutes",next:"hours",max:60})}},hours:{exp:/(\d+)hour[s]?/i,compute:function(t,e){return r(t,e,{current:"hours",next:"days",max:24})}},days:{exp:/(\d+)day[s]?/i,compute:function(t,e){function n(t){return 0>t?(e.years-=1,11):t>11?(e.years+=1,0):t}var r=o(e.months,e.years),i=t>=0?1:-1,s=t>=0?-1:1,a=0;if(t){for(;Math.abs(t)>=r;)e.months+=1*i,e.months=n(e.months),t+=s*r,r=o(e.months,e.years);e.days+=s*t}return e.days<0?a=-1:e.days>d[e.months]&&(a=1),-1!==a&&1!==a||(e.months+=a,e.months=n(e.months),e.days=d[e.months]+e.days),e}},months:{exp:/(\d+)month[s]?/i,compute:function(t,e){var n=t>0?Math.floor:Math.ceil;return t&&(e.years+=n.call(null,t/12),e.months+=t%12),e.months>11&&(e.years+=Math.floor((e.months+1)/12),e.months=(e.months+1)%12-1),e}},years:{exp:/(\d+)year[s]?/i,compute:function(t,e){return t&&(e.years+=t),e}}},p=Object.keys(h);e.parseDate=function(t){var e,n,r,o=Date.parse(t),i="^([^Z]+)",s="Z([\\+|\\-])?",a={};if(!isNaN(o))return new Date(o);if(p.forEach(function(t){s+="(\\d+[a-zA-Z]+)?"}),/^NOW/i.test(t)?(o=Date.now(),s=s.replace(/Z/,"NOW")):/^\-/.test(t)||/^\+/.test(t)?(o=Date.now(),s=s.replace(/Z/,"")):(o=t.match(new RegExp(i,"i")),o=Date.parse(o[1])),!o||!(n=t.match(new RegExp(s,"i"))))return null;o=new Date(o),r="+"===n[1]?1:-1;var e={milliseconds:o.getMilliseconds(),seconds:o.getSeconds(),minutes:o.getMinutes(),hours:o.getHours(),days:o.getDate(),months:o.getMonth(),years:o.getFullYear()};return n.slice(2).filter(Boolean).forEach(function(t){p.forEach(function(e){var n;(n=t.match(h[e].exp))&&(a[e]=r*parseInt(n[1],10))})}),p.forEach(function(t){e=h[t].compute(a[t],e)}),new Date(e.years,e.months,e.days,e.hours,e.minutes,e.seconds,e.milliseconds)},e.fromDates=function(t,n,r){if("string"==typeof t&&(t=e.parseDate(t)),"string"==typeof n&&(n=e.parseDate(n)),!(t instanceof Date&&n instanceof Date))return null;var o=n.valueOf()-t.valueOf();return r&&(o=Math.abs(o)),new f(o,0,0,0,0)},e.test=function(t){return l.test(t)||c.test(t)},e.instanceOf=function(t){return t instanceof f},e.clone=function(t){return t instanceof f?e.fromMilliseconds(t.totalMilliseconds()):void 0},f.prototype.add=function(t){t instanceof f&&(this.msecs+=t.totalMilliseconds())},f.prototype.addMilliseconds=function(t){n(t)&&(this.msecs+=t)},f.prototype.addSeconds=function(t){n(t)&&(this.msecs+=t*i)},f.prototype.addMinutes=function(t){n(t)&&(this.msecs+=t*s)},f.prototype.addHours=function(t){n(t)&&(this.msecs+=t*a)},f.prototype.addDays=function(t){n(t)&&(this.msecs+=t*u)},f.prototype.subtract=function(t){t instanceof f&&(this.msecs-=t.totalMilliseconds())},f.prototype.subtractMilliseconds=function(t){n(t)&&(this.msecs-=t)},f.prototype.subtractSeconds=function(t){n(t)&&(this.msecs-=t*i)},f.prototype.subtractMinutes=function(t){n(t)&&(this.msecs-=t*s)},f.prototype.subtractHours=function(t){n(t)&&(this.msecs-=t*a)},f.prototype.subtractDays=function(t){n(t)&&(this.msecs-=t*u)},f.prototype.totalMilliseconds=function(t){var e=this.msecs;return t===!0&&(e=Math.floor(e)),e},f.prototype.totalSeconds=function(t){var e=this.msecs/i;return t===!0&&(e=Math.floor(e)),e},f.prototype.totalMinutes=function(t){var e=this.msecs/s;return t===!0&&(e=Math.floor(e)),e},f.prototype.totalHours=function(t){var e=this.msecs/a;return t===!0&&(e=Math.floor(e)),e},f.prototype.totalDays=function(t){var e=this.msecs/u;return t===!0&&(e=Math.floor(e)),e},f.prototype.__defineGetter__("milliseconds",function(){return this.msecs%1e3}),f.prototype.__defineGetter__("seconds",function(){return Math.floor(this.msecs/i)%60}),f.prototype.__defineGetter__("minutes",function(){return Math.floor(this.msecs/s)%60}),f.prototype.__defineGetter__("hours",function(){return Math.floor(this.msecs/a)%24}),f.prototype.__defineGetter__("days",function(){return Math.floor(this.msecs/u)}),f.prototype.equals=function(t){return t instanceof f?this.msecs===t.totalMilliseconds():void 0},f.prototype.toString=function(){return this.format?this.format(this):this._format()},f.prototype._format=function(){return[this.days,this.hours,this.minutes,this.seconds+"."+this.milliseconds].join(":")};var d=[31,28,31,30,31,30,31,31,30,31,30,31]},function(t,e){t.exports=require("json-stringify-safe")},function(t,e){t.exports=require("auth0@2.1.0")},function(t,e){t.exports=require("async")},function(t,e){t.exports=require("moment")},function(t,e){t.exports=require("useragent")},function(t,e){t.exports=require("express")},function(t,e,n){function r(t){return function(e,n,r){var o=s(n.x_wt.jtn);return n.originalUrl=n.url,n.url=n.url.replace(o,"/"),n.webtaskContext=a(e),t(n,r)}}function o(t){var e;return t.ext("onRequest",function(t,n){var r=s(t.x_wt.jtn);t.setUrl(t.url.replace(r,"/")),t.webtaskContext=e}),function(n,r,o){var i=t._dispatch();e=a(n),i(r,o)}}function i(t){return function(e,n,r){var o=s(n.x_wt.jtn);return n.originalUrl=n.url,n.url=n.url.replace(o,"/"),n.webtaskContext=a(e),t.emit("request",n,r)}}function s(t){var e="^/api/run/[^/]+/",n="(?:[^/?#]*/?)?";return new RegExp(e+(t?n:""))}function a(t){function e(t,e,r){var o=n(25);"function"==typeof e&&(r=e,e={}),r(o.preconditionFailed("Storage is not available in this context"))}function r(e,r,o){var i=n(25),s=n(15);"function"==typeof r&&(o=r,r={}),s({uri:t.secrets.EXT_STORAGE_URL,method:"GET",headers:r.headers||{},qs:{path:e},json:!0},function(t,e,n){return t?o(i.wrap(t,502)):404===e.statusCode&&Object.hasOwnProperty.call(r,"defaultValue")?o(null,r.defaultValue):e.statusCode>=400?o(i.create(e.statusCode,n&&n.message)):void o(null,n)})}function o(t,e,r,o){var i=n(25);"function"==typeof r&&(o=r,r={}),o(i.preconditionFailed("Storage is not available in this context"))}function i(e,r,o,i){var s=n(25),a=n(15);"function"==typeof o&&(i=o,o={}),a({uri:t.secrets.EXT_STORAGE_URL,method:"PUT",headers:o.headers||{},qs:{path:e},body:r},function(t,e,n){return t?i(s.wrap(t,502)):e.statusCode>=400?i(s.create(e.statusCode,n&&n.message)):void i(null)})}return t.read=t.secrets.EXT_STORAGE_URL?r:e,t.write=t.secrets.EXT_STORAGE_URL?i:o,t}e.fromConnect=e.fromExpress=r,e.fromHapi=o,e.fromServer=e.fromRestify=i},function(t,e){t.exports=require("boom")},function(t,e){t.exports=require("superagent")},function(t,e,n){(function(e){const r=n(28),o=n(29),i=["max","maxAge","length","dispose","stale"];t.exports=function(t){var n=new r(o.pick(t,i)),s=t.load,a=t.hash,u=function(){var r,i=o.toArray(arguments),u=i.slice(0,-1),l=i.slice(-1).pop();r=0!==u.length||a?a.apply(t,u):"_";var c=n.get(r);return c?e.apply(null,[l,null].concat(c)):void s.apply(null,u.concat(function(t){return t?l(t):(n.set(r,o.toArray(arguments).slice(1)),l.apply(null,arguments))}))};return u.keys=n.keys.bind(n),u},t.exports.sync=function(t){var e=new r(o.pick(t,i)),n=t.load,s=t.hash,a=function(){var r=o.toArray(arguments),i=s.apply(t,r),a=e.get(i);if(a)return a;var u=n.apply(null,r);return e.set(i,u),u};return a.keys=e.keys.bind(e),a}}).call(e,n(1).setImmediate)},function(t,e){t.exports=require("lru-cache")},function(t,e){t.exports=require("lodash")}]);
+
+	var loggly = exports;
+
+	//
+	// Export node-loggly core client APIs
+	//
+	loggly.version       = __webpack_require__(2).version;
+	loggly.createClient  = __webpack_require__(3).createClient;
+	loggly.serialize     = __webpack_require__(7).serialize;
+	loggly.Loggly        = __webpack_require__(3).Loggly;
+
+	//
+	// Export Resources for node-loggly
+	//
+	loggly.Search = __webpack_require__(10).Search;
+
+
+/***/ },
+/* 2 */
+/***/ function(module, exports) {
+
+	module.exports = {
+		"name": "loggly",
+		"description": "A client implementation for Loggly cloud Logging-as-a-Service API",
+		"version": "1.1.0",
+		"author": {
+			"name": "Charlie Robbins",
+			"email": "charlie.robbins@gmail.com"
+		},
+		"repository": {
+			"type": "git",
+			"url": "git+ssh://git@github.com/winstonjs/node-loggly.git"
+		},
+		"keywords": [
+			"cloud computing",
+			"api",
+			"logging",
+			"loggly"
+		],
+		"dependencies": {
+			"request": "2.67.x",
+			"timespan": "2.3.x",
+			"json-stringify-safe": "5.0.x"
+		},
+		"devDependencies": {
+			"common-style": "^3.1.0",
+			"vows": "0.8.x"
+		},
+		"main": "./lib/loggly",
+		"scripts": {
+			"pretest": "common lib/**/*.js lib/*.js test/helpers.js",
+			"test": "vows test/*-test.js --spec"
+		},
+		"license": "MIT",
+		"engines": {
+			"node": ">= 0.8.0"
+		},
+		"gitHead": "5e5ab617ae5ee69dd25ae69c6bdedb1b4098fa46",
+		"bugs": {
+			"url": "https://github.com/winstonjs/node-loggly/issues"
+		},
+		"homepage": "https://github.com/winstonjs/node-loggly#readme",
+		"_id": "loggly@1.1.0",
+		"_shasum": "663e3edb8c880b14ee8950cb35c52e0939c537ae",
+		"_from": "loggly@>=1.1.0 <2.0.0",
+		"_npmVersion": "2.14.15",
+		"_nodeVersion": "4.2.2",
+		"_npmUser": {
+			"name": "indexzero",
+			"email": "charlie.robbins@gmail.com"
+		},
+		"maintainers": [
+			{
+				"name": "indexzero",
+				"email": "charlie.robbins@gmail.com"
+			},
+			{
+				"name": "jcrugzz",
+				"email": "jcrugzz@gmail.com"
+			}
+		],
+		"dist": {
+			"shasum": "663e3edb8c880b14ee8950cb35c52e0939c537ae",
+			"tarball": "http://registry.npmjs.org/loggly/-/loggly-1.1.0.tgz"
+		},
+		"directories": {},
+		"_resolved": "https://registry.npmjs.org/loggly/-/loggly-1.1.0.tgz",
+		"readme": "ERROR: No README data found!"
+	};
+
+/***/ },
+/* 3 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/*
+	 * client.js: Core client functions for accessing Loggly
+	 *
+	 * (C) 2010 Charlie Robbins
+	 * MIT LICENSE
+	 *
+	 */
+
+	var events = __webpack_require__(4),
+	    util = __webpack_require__(5),
+	    qs = __webpack_require__(6),
+	    common = __webpack_require__(7),
+	    loggly = __webpack_require__(1),
+	    Search = __webpack_require__(10).Search,
+	    stringifySafe = __webpack_require__(12);
+
+	function stringify(msg) {
+	  var payload;
+
+	  try { payload = JSON.stringify(msg) }
+	  catch (ex) { payload = stringifySafe(msg, null, null, noop) }
+
+	  return payload;
+	}
+	//
+	// function createClient (options)
+	//   Creates a new instance of a Loggly client.
+	//
+	exports.createClient = function (options) {
+	  return new Loggly(options);
+	};
+
+	//
+	// ### function Loggly (options)
+	// #### @options {Object} Options for this Loggly client
+	// ####   @subdomain
+	// ####   @token
+	// ####   @json
+	// ####   @auth
+	// ####   @tags
+	// Constructor for the Loggly object
+	//
+	var Loggly = exports.Loggly = function (options) {
+	  if (!options || !options.subdomain || !options.token) {
+	    throw new Error('options.subdomain and options.token are required.');
+	  }
+
+	  events.EventEmitter.call(this);
+	  this.subdomain    = options.subdomain;
+	  this.token        = options.token;
+	  this.host         = options.host || 'logs-01.loggly.com';
+	  this.json         = options.json || null;
+	  this.auth         = options.auth || null;
+	  this.proxy        = options.proxy || null;
+	  this.userAgent    = 'node-loggly ' + loggly.version;
+	  this.useTagHeader = 'useTagHeader' in options ? options.useTagHeader : true;
+
+	  //
+	  // Set the tags on this instance.
+	  //
+	  this.tags = options.tags
+	    ? this.tagFilter(options.tags)
+	    : null;
+
+	  var url   = 'https://' + this.host,
+	      api   = options.api  || 'apiv2';
+
+	  this.urls = {
+	    default: url,
+	    log:     [url, 'inputs', this.token].join('/'),
+	    bulk:    [url, 'bulk', this.token].join('/'),
+	    api:     'https://' + [this.subdomain, 'loggly', 'com'].join('.') + '/' + api
+	  };
+	};
+
+	//
+	// Inherit from events.EventEmitter
+	//
+	util.inherits(Loggly, events.EventEmitter);
+
+	//
+	// ### function log (msg, tags, callback)
+	// #### @msg {string|Object} Data to log
+	// #### @tags {Array} **Optional** Tags to send with this msg
+	// #### @callback {function} Continuation to respond to when complete.
+	// Logs the message to the token associated with this instance. If
+	// the message is an Object we will attempt to serialize it. If any
+	// `tags` are supplied they will be passed via the `X-LOGGLY-TAG` header.
+	//  - http://www.loggly.com/docs/api-sending-data/
+	//
+	Loggly.prototype.log = function (msg, tags, callback) {
+	  if (!callback && typeof tags === 'function') {
+	    callback = tags;
+	    tags = null;
+	  }
+
+	  var self = this,
+	      logOptions;
+
+	  //
+	  // Remark: Have some extra logic for detecting if we want to make a bulk
+	  // request to loggly
+	  //
+	  var isBulk = Array.isArray(msg);
+	  function serialize(msg) {
+	    if (msg instanceof Object) {
+	      return self.json ? stringify(msg) : common.serialize(msg);
+	    }
+	    else {
+	      return self.json ? stringify({ message: msg }) : msg;
+	    }
+	  }
+
+	  msg = isBulk ? msg.map(serialize).join('\n') : serialize(msg);
+
+	  logOptions = {
+	    uri:     isBulk ? this.urls.bulk : this.urls.log,
+	    method:  'POST',
+	    body:    msg,
+	    proxy:   this.proxy,
+	    headers: {
+	      host:             this.host,
+	      accept:           '*/*',
+	      'user-agent':     this.userAgent,
+	      'content-type':   this.json ? 'application/json' : 'text/plain',
+	      'content-length': Buffer.byteLength(msg)
+	    }
+	  };
+
+	  //
+	  // Remark: if tags are passed in run the filter on them and concat
+	  // with any tags that were passed or just use default tags if they exist
+	  //
+	  tags = tags
+	    ? (this.tags ? this.tags.concat(this.tagFilter(tags)) : this.tagFilter(tags))
+	    : this.tags;
+
+	  //
+	  // Optionally send `X-LOGGLY-TAG` if we have them
+	  //
+	  if (tags) {
+	    // Decide whether to add tags as http headers or add them to the URI.
+	    if (this.useTagHeader) {
+	      logOptions.headers['X-LOGGLY-TAG'] = tags.join(',');
+	    }
+	    else {
+	      logOptions.uri += '/tag/' + tags.join(',') + '/';
+	    }
+	  }
+
+	  common.loggly(logOptions, callback, function (res, body) {
+	    try {
+	      var result = JSON.parse(body);
+	      self.emit('log', result);
+	      if (callback) {
+	        callback(null, result);
+	      }
+	    }
+	    catch (ex) {
+	      if (callback) {
+	        callback(new Error('Unspecified error from Loggly: ' + ex));
+	      }
+	    }
+	  });
+
+	  return this;
+	};
+
+	//
+	// ### function tag (tags)
+	// #### @tags {Array} Tags to use for `X-LOGGLY-TAG`
+	// Sets the tags on this instance
+	//
+	Loggly.prototype.tagFilter = function (tags) {
+	  var isSolid = /^[\w\d][\w\d-_.]+/;
+
+	  tags = !Array.isArray(tags)
+	    ? [tags]
+	    : tags;
+
+	  //
+	  // TODO: Filter against valid tag names with some Regex
+	  // http://www.loggly.com/docs/tags/
+	  // Remark: Docs make me think we dont need this but whatevs
+	  //
+	  return tags.filter(function (tag) {
+	    //
+	    // Remark: length may need to use Buffer.byteLength?
+	    //
+	    return isSolid.test(tag) && tag.length <= 64;
+	  });
+	};
+
+	//
+	// ### function customer (callback)
+	// ### @callback {function} Continuation to respond to.
+	// Retrieves the customer information from the Loggly API:
+	//   - http://www.loggly.com/docs/api-account-info/
+	//
+	Loggly.prototype.customer = function (callback) {
+	  common.loggly({
+	    uri: this.logglyUrl('customer'),
+	    auth: this.auth
+	  }, callback, function (res, body) {
+	    var customer;
+	    try { customer = JSON.parse(body) }
+	    catch (ex) { return callback(ex) }
+	    callback(null, customer);
+	  });
+	};
+
+	//
+	// function search (query, callback)
+	//   Returns a new search object which can be chained
+	//   with options or called directly if @callback is passed
+	//   initially.
+	//
+	// Sample Usage:
+	//
+	//   client.search('404', function () { /* ... */ })
+	//         .on('rsid', function (rsid) { /* ... */ })
+	//
+	//   client.search({ query: '404', rows: 100 })
+	//         .on('rsid', function (rsid) { /* ... */ })
+	//         .run(function () { /* ... */ });
+	//
+	Loggly.prototype.search = function (query, callback) {
+	  var options = typeof query === 'string'
+	    ? { query: query }
+	    : query;
+
+	  options.callback = callback;
+	  return new Search(options, this);
+	};
+
+	//
+	// function logglyUrl ([path, to, resource])
+	//   Helper method that concats the string params into a url
+	//   to request against a loggly serverUrl.
+	//
+	Loggly.prototype.logglyUrl = function (/* path, to, resource */) {
+	  var args = Array.prototype.slice.call(arguments);
+	  return [this.urls.api].concat(args).join('/');
+	};
+
+	//
+	// Simple noop function for reusability
+	//
+	function noop() {}
+
+
+/***/ },
+/* 4 */
+/***/ function(module, exports) {
+
+	module.exports = require("events");
+
+/***/ },
+/* 5 */
+/***/ function(module, exports) {
+
+	module.exports = require("util");
+
+/***/ },
+/* 6 */
+/***/ function(module, exports) {
+
+	module.exports = require("querystring");
+
+/***/ },
+/* 7 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/*
+	 * common.js: Common utility functions for requesting against Loggly APIs
+	 *
+	 * (C) 2010 Charlie Robbins
+	 * MIT LICENSE
+	 *
+	 */
+
+	var https = __webpack_require__(8),
+	    util = __webpack_require__(5),
+	    request = __webpack_require__(9),
+	    loggly = __webpack_require__(1);
+
+	var common = exports;
+
+	//
+	// Failure HTTP Response codes based
+	// off Loggly specification.
+	//
+	var failCodes = common.failCodes = {
+	  400: 'Bad Request',
+	  401: 'Unauthorized',
+	  403: 'Forbidden',
+	  404: 'Not Found',
+	  409: 'Conflict / Duplicate',
+	  410: 'Gone',
+	  500: 'Internal Server Error',
+	  501: 'Not Implemented',
+	  503: 'Throttled'
+	};
+
+	//
+	// Success HTTP Response codes based
+	// off Loggly specification.
+	//
+	var successCodes = common.successCodes = {
+	  200: 'OK',
+	  201: 'Created',
+	  202: 'Accepted',
+	  203: 'Non-authoritative information',
+	  204: 'Deleted'
+	};
+
+	//
+	// Core method that actually sends requests to Loggly.
+	// This method is designed to be flexible w.r.t. arguments
+	// and continuation passing given the wide range of different
+	// requests required to fully implement the Loggly API.
+	//
+	// Continuations:
+	//   1. 'callback': The callback passed into every node-loggly method
+	//   2. 'success':  A callback that will only be called on successful requests.
+	//                  This is used throughout node-loggly to conditionally
+	//                  do post-request processing such as JSON parsing.
+	//
+	// Possible Arguments (1 & 2 are equivalent):
+	//   1. common.loggly('some-fully-qualified-url', auth, callback, success)
+	//   2. common.loggly('GET', 'some-fully-qualified-url', auth, callback, success)
+	//   3. common.loggly('DELETE', 'some-fully-qualified-url', auth, callback, success)
+	//   4. common.loggly({ method: 'POST', uri: 'some-url', body: { some: 'body'} }, callback, success)
+	//
+	common.loggly = function () {
+	  var args = Array.prototype.slice.call(arguments),
+	      success = args.pop(),
+	      callback = args.pop(),
+	      responded,
+	      requestBody,
+	      headers,
+	      method,
+	      auth,
+	      proxy,
+	      uri;
+
+	  //
+	  // Now that we've popped off the two callbacks
+	  // We can make decisions about other arguments
+	  //
+	  if (args.length === 1) {
+	    if (typeof args[0] === 'string') {
+	      //
+	      // If we got a string assume that it's the URI
+	      //
+	      method = 'GET';
+	      uri    = args[0];
+	    }
+	    else {
+	      method      = args[0].method || 'GET';
+	      uri         = args[0].uri;
+	      requestBody = args[0].body;
+	      auth        = args[0].auth;
+	      headers     = args[0].headers;
+	      proxy       = args[0].proxy;
+	    }
+	  }
+	  else if (args.length === 2) {
+	    method = 'GET';
+	    uri    = args[0];
+	    auth   = args[1];
+	  }
+	  else {
+	    method = args[0];
+	    uri    = args[1];
+	    auth   = args[2];
+	  }
+
+	  function onError(err) {
+	    if (!responded) {
+	      responded = true;
+	      if (callback) { callback(err) }
+	    }
+	  }
+
+	  var requestOptions = {
+	    uri: uri,
+	    method: method,
+	    headers: headers || {},
+	    proxy: proxy
+	  };
+
+	  if (auth) {
+	    requestOptions.headers.authorization = 'Basic ' + new Buffer(auth.username + ':' + auth.password).toString('base64');
+	  }
+
+	  if (requestBody) {
+	    requestOptions.body = requestBody;
+	  }
+
+	  try {
+	    request(requestOptions, function (err, res, body) {
+	      if (err) {
+	        return onError(err);
+	      }
+
+	      var statusCode = res.statusCode.toString();
+	      if (Object.keys(failCodes).indexOf(statusCode) !== -1) {
+	        return onError((new Error('Loggly Error (' + statusCode + '): ' + failCodes[statusCode])));
+	      }
+
+	      success(res, body);
+	    });
+	  }
+	  catch (ex) {
+	    onError(ex);
+	  }
+	};
+
+	//
+	// ### function serialize (obj, key)
+	// #### @obj {Object|literal} Object to serialize
+	// #### @key {string} **Optional** Optional key represented by obj in a larger object
+	// Performs simple comma-separated, `key=value` serialization for Loggly when
+	// logging for non-JSON values.
+	//
+	common.serialize = function (obj, key) {
+	  if (obj === null) {
+	    obj = 'null';
+	  }
+	  else if (obj === undefined) {
+	    obj = 'undefined';
+	  }
+	  else if (obj === false) {
+	    obj = 'false';
+	  }
+
+	  if (typeof obj !== 'object') {
+	    return key ? key + '=' + obj : obj;
+	  }
+
+	  var msg = '',
+	      keys = Object.keys(obj),
+	      length = keys.length;
+
+	  for (var i = 0; i < length; i++) {
+	    if (Array.isArray(obj[keys[i]])) {
+	      msg += keys[i] + '=[';
+
+	      for (var j = 0, l = obj[keys[i]].length; j < l; j++) {
+	        msg += common.serialize(obj[keys[i]][j]);
+	        if (j < l - 1) {
+	          msg += ', ';
+	        }
+	      }
+
+	      msg += ']';
+	    }
+	    else {
+	      msg += common.serialize(obj[keys[i]], keys[i]);
+	    }
+
+	    if (i < length - 1) {
+	      msg += ', ';
+	    }
+	  }
+
+	  return msg;
+	};
+
+	//
+	// function clone (obj)
+	//   Helper method for deep cloning pure JSON objects
+	//   i.e. JSON objects that are either literals or objects (no Arrays, etc)
+	//
+	common.clone = function (obj) {
+	  var clone = {};
+	  for (var i in obj) {
+	    clone[i] = obj[i] instanceof Object ? common.clone(obj[i]) : obj[i];
+	  }
+
+	  return clone;
+	};
+
+
+/***/ },
+/* 8 */
+/***/ function(module, exports) {
+
+	module.exports = require("https");
+
+/***/ },
+/* 9 */
+/***/ function(module, exports) {
+
+	module.exports = require("request");
+
+/***/ },
+/* 10 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/*
+	 * search.js: chainable search functions for Loggly
+	 *
+	 * (C) 2010 Charlie Robbins
+	 * MIT LICENSE
+	 *
+	 */
+
+	var events = __webpack_require__(4),
+	    util = __webpack_require__(5),
+	    qs = __webpack_require__(6),
+	    timespan = __webpack_require__(11),
+	    common = __webpack_require__(7);
+
+	//
+	// ### function Search (options, client, callback)
+	// #### @options {Object} Options for the search instance
+	// #### @client {Loggly} Loggly API client
+	// Chainable search object for Loggly API
+	//
+	var Search = exports.Search = function (options, client) {
+	  if (!options || (!options.query && !options.q)) {
+	    throw new Error('options.query is required to execute a Loggly search.');
+	  }
+
+	  events.EventEmitter.call(this);
+
+	  if (options.query) {
+	    options.q = options.query;
+	    delete options.query;
+	  }
+
+	  this.options = options;
+	  this.client  = client;
+
+	  //
+	  // If we're passed a callback, run immediately.
+	  //
+	  if (options.callback) {
+	    this.callback = options.callback;
+	    delete options.callback;
+	    this.run();
+	  }
+	};
+
+	//
+	// Inherit from events.EventEmitter
+	//
+	util.inherits(Search, events.EventEmitter);
+
+	//
+	// ### function run (callback)
+	// #### @callback {function} Continuation to respond to when complete
+	// Runs the search query for for this instance with the query, and
+	// other parameters that have been configured on it.
+	//
+	Search.prototype.run = function (callback) {
+	  var self = this,
+	      responded;
+
+	  //
+	  // Trim the search query
+	  //
+	  this.options.q.trim();
+
+	  //
+	  // Update the callback for this instance if it's passed
+	  //
+	  this.callback = callback || this.callback;
+	  if (!this.callback) {
+	    throw new Error('Cannot run search without a callback function.');
+	  }
+
+	  //
+	  // ### function respond (arguments...)
+	  // Responds only once.
+	  //
+	  function respond() {
+	    if (!responded) {
+	      responded = true;
+	      self.callback.apply(null, arguments);
+	    }
+	  }
+
+	  //
+	  // ### function awaitResults (rsid)
+	  // Checks the Loggly API on an interval for the
+	  // results from the specified `rsid`.
+	  //
+	  function awaitResults(rsid) {
+	    if (!rsid || !rsid.id) {
+	      return respond(rsid);
+	    }
+
+	    common.loggly({
+	      uri:  self.client.logglyUrl('events?' + qs.stringify({ rsid: rsid.id })),
+	      auth: self.client.auth,
+	      json: true
+	    }, respond, function (res, body) {
+	      var results;
+	      try { results = JSON.parse(body) }
+	      catch (ex) { return respond(ex) }
+	      respond(null, results);
+	    });
+	  }
+
+	  //
+	  // Check any time ranges (if supplied) to ensure
+	  // they are valid.
+	  //
+	  this._checkRange();
+
+	  common.loggly({
+	    uri:  this.client.logglyUrl('search?' + qs.stringify(this.options)),
+	    auth: this.client.auth,
+	    json: true
+	  }, this.callback, function (res, body) {
+	    var rsid;
+	    try { rsid = JSON.parse(body).rsid }
+	    catch (ex) { rsid = ex }
+
+	    self.emit('rsid', rsid);
+	    awaitResults(rsid);
+	  });
+
+	  return this;
+	};
+
+	//
+	// ### function _checkRange ()
+	// Checks if the range that has been configured for this
+	// instance is valid and updates if it is not.
+	//
+	Search.prototype._checkRange = function () {
+	  if (!this.options.until && !this.options.from) {
+	    return;
+	  }
+
+	  this.options.until = this.options.until || 'now';
+	  this.options.from  = this.options.from  || '-24h';
+
+	  if (!timespan.parseDate(this.options.until)) {
+	    this.options.until = 'now';
+	  }
+
+	  if (!timespan.parseDate(this.options.from)) {
+	    this.options.from = '-24h';
+	  }
+
+	  if (timespan.fromDates(this.options.from, this.options.until) < 0
+	    || this.options.until === this.options.from) {
+	    //
+	    // If the length of the timespan for this Search instance is
+	    // negative then set it to default values
+	    //
+	    this.options.until = 'now';
+	    this.options.from = '-24h';
+	  }
+
+	  return this;
+	};
+
+
+/***/ },
+/* 11 */
+/***/ function(module, exports) {
+
+	/*
+	* JavaScript TimeSpan Library
+	*
+	* Copyright (c) 2010 Michael Stum, Charlie Robbins
+	* 
+	* Permission is hereby granted, free of charge, to any person obtaining
+	* a copy of this software and associated documentation files (the
+	* "Software"), to deal in the Software without restriction, including
+	* without limitation the rights to use, copy, modify, merge, publish,
+	* distribute, sublicense, and/or sell copies of the Software, and to
+	* permit persons to whom the Software is furnished to do so, subject to
+	* the following conditions:
+	* 
+	* The above copyright notice and this permission notice shall be
+	* included in all copies or substantial portions of the Software.
+	* 
+	* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+	* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+	* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+	* NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+	* LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+	* OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+	* WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+	*/
+
+	//
+	// ### Time constants
+	//
+	var msecPerSecond = 1000,
+	    msecPerMinute = 60000,
+	    msecPerHour = 3600000,
+	    msecPerDay = 86400000;
+
+	//
+	// ### Timespan Parsers
+	//
+	var timeSpanWithDays = /^(\d+):(\d+):(\d+):(\d+)(\.\d+)?/,
+	    timeSpanNoDays = /^(\d+):(\d+):(\d+)(\.\d+)?/;
+
+	//
+	// ### function TimeSpan (milliseconds, seconds, minutes, hours, days)
+	// #### @milliseconds {Number} Number of milliseconds for this instance.
+	// #### @seconds {Number} Number of seconds for this instance.
+	// #### @minutes {Number} Number of minutes for this instance.
+	// #### @hours {Number} Number of hours for this instance.
+	// #### @days {Number} Number of days for this instance.
+	// Constructor function for the `TimeSpan` object which represents a length
+	// of positive or negative milliseconds componentized into milliseconds, 
+	// seconds, hours, and days.
+	//
+	var TimeSpan = exports.TimeSpan = function (milliseconds, seconds, minutes, hours, days) {
+	  this.msecs = 0;
+	  
+	  if (isNumeric(days)) {
+	    this.msecs += (days * msecPerDay);
+	  }
+	  
+	  if (isNumeric(hours)) {
+	    this.msecs += (hours * msecPerHour);
+	  }
+	  
+	  if (isNumeric(minutes)) {
+	    this.msecs += (minutes * msecPerMinute);
+	  }
+	  
+	  if (isNumeric(seconds)) {
+	    this.msecs += (seconds * msecPerSecond);
+	  }
+	  
+	  if (isNumeric(milliseconds)) {
+	    this.msecs += milliseconds;
+	  }
+	};
+
+	//
+	// ## Factory methods
+	// Helper methods for creating new TimeSpan objects
+	// from various criteria: milliseconds, seconds, minutes,
+	// hours, days, strings and other `TimeSpan` instances.
+	//
+
+	//
+	// ### function fromMilliseconds (milliseconds)
+	// #### @milliseconds {Number} Amount of milliseconds for the new TimeSpan instance.
+	// Creates a new `TimeSpan` instance with the specified `milliseconds`.
+	//
+	exports.fromMilliseconds = function (milliseconds) {
+	  if (!isNumeric(milliseconds)) { return }
+	  return new TimeSpan(milliseconds, 0, 0, 0, 0);
+	}
+
+	//
+	// ### function fromSeconds (seconds)
+	// #### @milliseconds {Number} Amount of seconds for the new TimeSpan instance.
+	// Creates a new `TimeSpan` instance with the specified `seconds`.
+	//
+	exports.fromSeconds = function (seconds) {
+	  if (!isNumeric(seconds)) { return }
+	  return new TimeSpan(0, seconds, 0, 0, 0);
+	};
+
+	//
+	// ### function fromMinutes (milliseconds)
+	// #### @milliseconds {Number} Amount of minutes for the new TimeSpan instance.
+	// Creates a new `TimeSpan` instance with the specified `minutes`.
+	//
+	exports.fromMinutes = function (minutes) {
+	  if (!isNumeric(minutes)) { return }
+	  return new TimeSpan(0, 0, minutes, 0, 0);
+	};
+
+	//
+	// ### function fromHours (hours)
+	// #### @milliseconds {Number} Amount of hours for the new TimeSpan instance.
+	// Creates a new `TimeSpan` instance with the specified `hours`.
+	//
+	exports.fromHours = function (hours) {
+	  if (!isNumeric(hours)) { return }
+	  return new TimeSpan(0, 0, 0, hours, 0);
+	};
+
+	//
+	// ### function fromDays (days)
+	// #### @milliseconds {Number} Amount of days for the new TimeSpan instance.
+	// Creates a new `TimeSpan` instance with the specified `days`.
+	//
+	exports.fromDays = function (days) {
+	  if (!isNumeric(days)) { return }
+	  return new TimeSpan(0, 0, 0, 0, days);
+	};
+
+	//
+	// ### function parse (str)
+	// #### @str {string} Timespan string to parse.
+	// Creates a new `TimeSpan` instance from the specified
+	// string, `str`.
+	//
+	exports.parse = function (str) {
+	  var match, milliseconds;
+	  
+	  function parseMilliseconds (value) {
+	    return value ? parseFloat('0' + value) * 1000 : 0;
+	  }
+	  
+	  // If we match against a full TimeSpan: 
+	  //   [days]:[hours]:[minutes]:[seconds].[milliseconds]?
+	  if ((match = str.match(timeSpanWithDays))) {
+	    return new TimeSpan(parseMilliseconds(match[5]), match[4], match[3], match[2], match[1]);
+	  }
+	  
+	  // If we match against a partial TimeSpan:
+	  //   [hours]:[minutes]:[seconds].[milliseconds]?
+	  if ((match = str.match(timeSpanNoDays))) {
+	    return new TimeSpan(parseMilliseconds(match[4]), match[3], match[2], match[1], 0);
+	  }
+	  
+	  return null;
+	};
+
+	//
+	// List of default singular time modifiers and associated
+	// computation algoritm. Assumes in order, smallest to greatest
+	// performing carry forward additiona / subtraction for each
+	// Date-Time component.
+	//
+	var parsers = {
+	  'milliseconds': {
+	    exp: /(\d+)milli(?:second)?[s]?/i,
+	    compute: function (delta, computed) {
+	      return _compute(delta, computed, {
+	        current: 'milliseconds',
+	        next: 'seconds', 
+	        max: 1000
+	      });
+	    }
+	  },
+	  'seconds': {
+	    exp: /(\d+)second[s]?/i,
+	    compute: function (delta, computed) {
+	      return _compute(delta, computed, {
+	        current: 'seconds',
+	        next: 'minutes', 
+	        max: 60
+	      });
+	    }
+	  },
+	  'minutes': {
+	    exp: /(\d+)minute[s]?/i,
+	    compute: function (delta, computed) {
+	      return _compute(delta, computed, {
+	        current: 'minutes',
+	        next: 'hours', 
+	        max: 60
+	      });
+	    }
+	  },
+	  'hours': {
+	    exp: /(\d+)hour[s]?/i,
+	    compute: function (delta, computed) {
+	      return _compute(delta, computed, {
+	        current: 'hours',
+	        next: 'days', 
+	        max: 24
+	      });
+	    }
+	  },
+	  'days': {
+	    exp: /(\d+)day[s]?/i,
+	    compute: function (delta, computed) {
+	      var days     = monthDays(computed.months, computed.years),
+	          sign     = delta >= 0 ? 1 : -1,
+	          opsign   = delta >= 0 ? -1 : 1,
+	          clean    = 0;
+	      
+	      function update (months) {
+	        if (months < 0) { 
+	          computed.years -= 1;
+	          return 11;
+	        }
+	        else if (months > 11) { 
+	          computed.years += 1;
+	          return 0 
+	        }
+	        
+	        return months;
+	      }
+	      
+	      if (delta) {          
+	        while (Math.abs(delta) >= days) {
+	          computed.months += sign * 1;
+	          computed.months = update(computed.months);
+	          delta += opsign * days;
+	          days = monthDays(computed.months, computed.years);
+	        }
+	      
+	        computed.days += (opsign * delta);
+	      }
+	      
+	      if (computed.days < 0) { clean = -1 }
+	      else if (computed.days > months[computed.months]) { clean = 1 }
+	      
+	      if (clean === -1 || clean === 1) {
+	        computed.months += clean;
+	        computed.months = update(computed.months);
+	        computed.days = months[computed.months] + computed.days;
+	      }
+	            
+	      return computed;
+	    }
+	  },
+	  'months': {
+	    exp: /(\d+)month[s]?/i,
+	    compute: function (delta, computed) {
+	      var round = delta > 0 ? Math.floor : Math.ceil;
+	      if (delta) { 
+	        computed.years += round.call(null, delta / 12);
+	        computed.months += delta % 12;
+	      }
+	      
+	      if (computed.months > 11) {
+	        computed.years += Math.floor((computed.months + 1) / 12);
+	        computed.months = ((computed.months + 1) % 12) - 1;
+	      }
+	      
+	      return computed;
+	    }
+	  },
+	  'years': {
+	    exp: /(\d+)year[s]?/i,
+	    compute: function (delta, computed) {
+	      if (delta) { computed.years += delta; }
+	      return computed;
+	    }
+	  }
+	};
+
+	//
+	// Compute the list of parser names for
+	// later use.
+	//
+	var parserNames = Object.keys(parsers);
+
+	//
+	// ### function parseDate (str)
+	// #### @str {string} String to parse into a date
+	// Parses the specified liberal Date-Time string according to
+	// ISO8601 **and**:
+	//
+	// 1. `2010-04-03T12:34:15Z+12MINUTES`
+	// 2. `NOW-4HOURS`
+	//
+	// Valid modifiers for the more liberal Date-Time string(s):
+	//
+	//     YEAR, YEARS
+	//     MONTH, MONTHS
+	//     DAY, DAYS
+	//     HOUR, HOURS
+	//     MINUTE, MINUTES
+	//     SECOND, SECONDS
+	//     MILLI, MILLIS, MILLISECOND, MILLISECONDS
+	//
+	exports.parseDate = function (str) {
+	  var dateTime = Date.parse(str),
+	      iso = '^([^Z]+)',
+	      zulu = 'Z([\\+|\\-])?',
+	      diff = {},
+	      computed,
+	      modifiers,
+	      sign;
+
+	  //
+	  // If Date string supplied actually conforms 
+	  // to UTC Time (ISO8601), return a new Date.
+	  //
+	  if (!isNaN(dateTime)) {
+	    return new Date(dateTime);
+	  }
+	  
+	  //
+	  // Create the `RegExp` for the end component
+	  // of the target `str` to parse.
+	  //
+	  parserNames.forEach(function (group) {
+	    zulu += '(\\d+[a-zA-Z]+)?';
+	  });
+	  
+	  if (/^NOW/i.test(str)) {
+	    //
+	    // If the target `str` is a liberal `NOW-*`,
+	    // then set the base `dateTime` appropriately.
+	    //
+	    dateTime = Date.now();
+	    zulu = zulu.replace(/Z/, 'NOW');
+	  }
+	  else if (/^\-/.test(str) || /^\+/.test(str)) {
+	    dateTime = Date.now();
+	    zulu = zulu.replace(/Z/, '');
+	  }
+	  else {
+	    //
+	    // Parse the `ISO8601` component, and the end
+	    // component from the target `str`.
+	    //
+	    dateTime = str.match(new RegExp(iso, 'i'));
+	    dateTime = Date.parse(dateTime[1]);
+	  }
+	  
+	  //
+	  // If there was no match on either part then 
+	  // it must be a bad value.
+	  //
+	  if (!dateTime || !(modifiers = str.match(new RegExp(zulu, 'i')))) {
+	    return null;
+	  }
+	    
+	  //
+	  // Create a new `Date` object from the `ISO8601`
+	  // component of the target `str`.
+	  //
+	  dateTime = new Date(dateTime);
+	  sign = modifiers[1] === '+' ? 1 : -1;
+	  
+	  //
+	  // Create an Object-literal for consistently accessing
+	  // the various components of the computed Date.
+	  //
+	  var computed = {
+	    milliseconds: dateTime.getMilliseconds(),
+	    seconds: dateTime.getSeconds(),
+	    minutes: dateTime.getMinutes(),
+	    hours: dateTime.getHours(),
+	    days: dateTime.getDate(),
+	    months: dateTime.getMonth(),
+	    years: dateTime.getFullYear()
+	  };
+	  
+	  //
+	  // Parse the individual component spans (months, years, etc)
+	  // from the modifier strings that we parsed from the end 
+	  // of the target `str`.
+	  //
+	  modifiers.slice(2).filter(Boolean).forEach(function (modifier) {
+	    parserNames.forEach(function (name) {
+	      var match;
+	      if (!(match = modifier.match(parsers[name].exp))) {
+	        return;
+	      }
+	      
+	      diff[name] = sign * parseInt(match[1], 10);
+	    })
+	  });
+	  
+	  //
+	  // Compute the total `diff` by iteratively computing 
+	  // the partial components from smallest to largest.
+	  //
+	  parserNames.forEach(function (name) {    
+	    computed = parsers[name].compute(diff[name], computed);
+	  });
+	  
+	  return new Date(
+	    computed.years,
+	    computed.months,
+	    computed.days,
+	    computed.hours,
+	    computed.minutes,
+	    computed.seconds,
+	    computed.milliseconds
+	  );
+	};
+
+	//
+	// ### function fromDates (start, end, abs)
+	// #### @start {Date} Start date of the `TimeSpan` instance to return
+	// #### @end {Date} End date of the `TimeSpan` instance to return
+	// #### @abs {boolean} Value indicating to return an absolute value
+	// Returns a new `TimeSpan` instance representing the difference between
+	// the `start` and `end` Dates.
+	//
+	exports.fromDates = function (start, end, abs) {
+	  if (typeof start === 'string') {
+	    start = exports.parseDate(start);
+	  }
+	  
+	  if (typeof end === 'string') {
+	    end = exports.parseDate(end);
+	  }
+	  
+	  if (!(start instanceof Date && end instanceof Date)) {
+	    return null;
+	  }
+	  
+	  var differenceMsecs = end.valueOf() - start.valueOf();
+	  if (abs) {
+	    differenceMsecs = Math.abs(differenceMsecs);
+	  }
+
+	  return new TimeSpan(differenceMsecs, 0, 0, 0, 0);
+	};
+
+	//
+	// ## Module Helpers
+	// Module-level helpers for various utilities such as:
+	// instanceOf, parsability, and cloning.
+	//
+
+	//
+	// ### function test (str)
+	// #### @str {string} String value to test if it is a TimeSpan
+	// Returns a value indicating if the specified string, `str`,
+	// is a parsable `TimeSpan` value.
+	//
+	exports.test = function (str) {
+	  return timeSpanWithDays.test(str) || timeSpanNoDays.test(str);
+	};
+
+	//
+	// ### function instanceOf (timeSpan)
+	// #### @timeSpan {Object} Object to check TimeSpan quality.
+	// Returns a value indicating if the specified `timeSpan` is
+	// in fact a `TimeSpan` instance.
+	//
+	exports.instanceOf = function (timeSpan) {
+	  return timeSpan instanceof TimeSpan;
+	};
+
+	//
+	// ### function clone (timeSpan)
+	// #### @timeSpan {TimeSpan} TimeSpan object to clone.
+	// Returns a new `TimeSpan` instance with the same value
+	// as the `timeSpan` object supplied.
+	//
+	exports.clone = function (timeSpan) {
+	  if (!(timeSpan instanceof TimeSpan)) { return }
+	  return exports.fromMilliseconds(timeSpan.totalMilliseconds());
+	};
+
+	//
+	// ## Addition
+	// Methods for adding `TimeSpan` instances, 
+	// milliseconds, seconds, hours, and days to other
+	// `TimeSpan` instances.
+	//
+
+	//
+	// ### function add (timeSpan)
+	// #### @timeSpan {TimeSpan} TimeSpan to add to this instance
+	// Adds the specified `timeSpan` to this instance.
+	//
+	TimeSpan.prototype.add = function (timeSpan) {
+	  if (!(timeSpan instanceof TimeSpan)) { return }
+	  this.msecs += timeSpan.totalMilliseconds();
+	};
+
+	//
+	// ### function addMilliseconds (milliseconds)
+	// #### @milliseconds {Number} Number of milliseconds to add.
+	// Adds the specified `milliseconds` to this instance.
+	//
+	TimeSpan.prototype.addMilliseconds = function (milliseconds) {
+	  if (!isNumeric(milliseconds)) { return }
+	  this.msecs += milliseconds;
+	};
+
+	//
+	// ### function addSeconds (seconds)
+	// #### @seconds {Number} Number of seconds to add.
+	// Adds the specified `seconds` to this instance.
+	//
+	TimeSpan.prototype.addSeconds = function (seconds) {
+	  if (!isNumeric(seconds)) { return }
+	  
+	  this.msecs += (seconds * msecPerSecond);
+	};
+
+	//
+	// ### function addMinutes (minutes)
+	// #### @minutes {Number} Number of minutes to add.
+	// Adds the specified `minutes` to this instance.
+	//
+	TimeSpan.prototype.addMinutes = function (minutes) {
+	  if (!isNumeric(minutes)) { return }
+	  this.msecs += (minutes * msecPerMinute);
+	};
+
+	//
+	// ### function addHours (hours)
+	// #### @hours {Number} Number of hours to add.
+	// Adds the specified `hours` to this instance.
+	//
+	TimeSpan.prototype.addHours = function (hours) {
+	  if (!isNumeric(hours)) { return }
+	  this.msecs += (hours * msecPerHour);
+	};
+
+	//
+	// ### function addDays (days)
+	// #### @days {Number} Number of days to add.
+	// Adds the specified `days` to this instance.
+	//
+	TimeSpan.prototype.addDays = function (days) {
+	  if (!isNumeric(days)) { return }
+	  this.msecs += (days * msecPerDay);
+	};
+
+	//
+	// ## Subtraction
+	// Methods for subtracting `TimeSpan` instances, 
+	// milliseconds, seconds, hours, and days from other
+	// `TimeSpan` instances.
+	//
+
+	//
+	// ### function subtract (timeSpan)
+	// #### @timeSpan {TimeSpan} TimeSpan to subtract from this instance.
+	// Subtracts the specified `timeSpan` from this instance.
+	//
+	TimeSpan.prototype.subtract = function (timeSpan) {
+	  if (!(timeSpan instanceof TimeSpan)) { return }
+	  this.msecs -= timeSpan.totalMilliseconds();
+	};
+
+	//
+	// ### function subtractMilliseconds (milliseconds)
+	// #### @milliseconds {Number} Number of milliseconds to subtract.
+	// Subtracts the specified `milliseconds` from this instance.
+	//
+	TimeSpan.prototype.subtractMilliseconds = function (milliseconds) {
+	  if (!isNumeric(milliseconds)) { return }
+	  this.msecs -= milliseconds;
+	};
+
+	//
+	// ### function subtractSeconds (seconds)
+	// #### @seconds {Number} Number of seconds to subtract.
+	// Subtracts the specified `seconds` from this instance.
+	//
+	TimeSpan.prototype.subtractSeconds = function (seconds) {
+	  if (!isNumeric(seconds)) { return }
+	  this.msecs -= (seconds * msecPerSecond);
+	};
+
+	//
+	// ### function subtractMinutes (minutes)
+	// #### @minutes {Number} Number of minutes to subtract.
+	// Subtracts the specified `minutes` from this instance.
+	//
+	TimeSpan.prototype.subtractMinutes = function (minutes) {
+	  if (!isNumeric(minutes)) { return }
+	  this.msecs -= (minutes * msecPerMinute);
+	};
+
+	//
+	// ### function subtractHours (hours)
+	// #### @hours {Number} Number of hours to subtract.
+	// Subtracts the specified `hours` from this instance.
+	//
+	TimeSpan.prototype.subtractHours = function (hours) {
+	  if (!isNumeric(hours)) { return }
+	  this.msecs -= (hours * msecPerHour);
+	};
+
+	//
+	// ### function subtractDays (days)
+	// #### @days {Number} Number of days to subtract.
+	// Subtracts the specified `days` from this instance.
+	//
+	TimeSpan.prototype.subtractDays = function (days) {
+	  if (!isNumeric(days)) { return }
+	  this.msecs -= (days * msecPerDay);
+	};
+
+	//
+	// ## Getters
+	// Methods for retrieving components of a `TimeSpan`
+	// instance: milliseconds, seconds, minutes, hours, and days.
+	//
+
+	//
+	// ### function totalMilliseconds (roundDown)
+	// #### @roundDown {boolean} Value indicating if the value should be rounded down.
+	// Returns the total number of milliseconds for this instance, rounding down
+	// to the nearest integer if `roundDown` is set.
+	//
+	TimeSpan.prototype.totalMilliseconds = function (roundDown) {
+	  var result = this.msecs;
+	  if (roundDown === true) {
+	    result = Math.floor(result);
+	  }
+	  
+	  return result;
+	};
+
+	//
+	// ### function totalSeconds (roundDown)
+	// #### @roundDown {boolean} Value indicating if the value should be rounded down.
+	// Returns the total number of seconds for this instance, rounding down
+	// to the nearest integer if `roundDown` is set.
+	//
+	TimeSpan.prototype.totalSeconds = function (roundDown) {
+	  var result = this.msecs / msecPerSecond;
+	  if (roundDown === true) {
+	    result = Math.floor(result);
+	  }
+	  
+	  return result;
+	};
+
+	//
+	// ### function totalMinutes (roundDown)
+	// #### @roundDown {boolean} Value indicating if the value should be rounded down.
+	// Returns the total number of minutes for this instance, rounding down
+	// to the nearest integer if `roundDown` is set.
+	//
+	TimeSpan.prototype.totalMinutes = function (roundDown) {
+	  var result = this.msecs / msecPerMinute;
+	  if (roundDown === true) {
+	    result = Math.floor(result);
+	  }
+	  
+	  return result;
+	};
+
+	//
+	// ### function totalHours (roundDown)
+	// #### @roundDown {boolean} Value indicating if the value should be rounded down.
+	// Returns the total number of hours for this instance, rounding down
+	// to the nearest integer if `roundDown` is set.
+	//
+	TimeSpan.prototype.totalHours = function (roundDown) {
+	  var result = this.msecs / msecPerHour;
+	  if (roundDown === true) {
+	    result = Math.floor(result);
+	  }
+	  
+	  return result;
+	};
+
+	//
+	// ### function totalDays (roundDown)
+	// #### @roundDown {boolean} Value indicating if the value should be rounded down.
+	// Returns the total number of days for this instance, rounding down
+	// to the nearest integer if `roundDown` is set.
+	//
+	TimeSpan.prototype.totalDays = function (roundDown) {
+	  var result = this.msecs / msecPerDay;
+	  if (roundDown === true) {
+	    result = Math.floor(result);
+	  }
+	  
+	  return result;
+	};
+
+	//
+	// ### @milliseconds
+	// Returns the length of this `TimeSpan` instance in milliseconds.
+	//
+	TimeSpan.prototype.__defineGetter__('milliseconds', function () {
+	  return this.msecs % 1000;
+	});
+
+	//
+	// ### @seconds
+	// Returns the length of this `TimeSpan` instance in seconds.
+	//
+	TimeSpan.prototype.__defineGetter__('seconds', function () {
+	  return Math.floor(this.msecs / msecPerSecond) % 60;
+	});
+
+	//
+	// ### @minutes
+	// Returns the length of this `TimeSpan` instance in minutes.
+	//
+	TimeSpan.prototype.__defineGetter__('minutes', function () {
+	  return Math.floor(this.msecs / msecPerMinute) % 60;
+	});
+
+	//
+	// ### @hours
+	// Returns the length of this `TimeSpan` instance in hours.
+	//
+	TimeSpan.prototype.__defineGetter__('hours', function () {
+	  return Math.floor(this.msecs / msecPerHour) % 24;
+	});
+
+	//
+	// ### @days
+	// Returns the length of this `TimeSpan` instance in days.
+	//
+	TimeSpan.prototype.__defineGetter__('days', function () {
+	  return Math.floor(this.msecs / msecPerDay);
+	});
+
+	//
+	// ## Instance Helpers
+	// Various help methods for performing utilities
+	// such as equality and serialization
+	//
+
+	//
+	// ### function equals (timeSpan)
+	// #### @timeSpan {TimeSpan} TimeSpan instance to assert equal
+	// Returns a value indicating if the specified `timeSpan` is equal
+	// in milliseconds to this instance.
+	//
+	TimeSpan.prototype.equals = function (timeSpan) {
+	  if (!(timeSpan instanceof TimeSpan)) { return }
+	  return this.msecs === timeSpan.totalMilliseconds();
+	};
+
+	//
+	// ### function toString () 
+	// Returns a string representation of this `TimeSpan`
+	// instance according to current `format`.
+	//
+	TimeSpan.prototype.toString = function () {
+	  if (!this.format) { return this._format() }
+	  return this.format(this);
+	};
+
+	//
+	// ### @private function _format () 
+	// Returns the default string representation of this instance.
+	//
+	TimeSpan.prototype._format = function () {
+	  return [
+	    this.days,
+	    this.hours,
+	    this.minutes,
+	    this.seconds + '.' + this.milliseconds
+	  ].join(':')
+	};
+
+	//
+	// ### @private function isNumeric (input) 
+	// #### @input {Number} Value to check numeric quality of.
+	// Returns a value indicating the numeric quality of the 
+	// specified `input`.
+	//
+	function isNumeric (input) {
+	  return input && !isNaN(parseFloat(input)) && isFinite(input);
+	};
+
+	//
+	// ### @private function _compute (delta, date, computed, options)
+	// #### @delta {Number} Channge in this component of the date
+	// #### @computed {Object} Currently computed date.
+	// #### @options {Object} Options for the computation
+	// Performs carry forward addition or subtraction for the
+	// `options.current` component of the `computed` date, carrying 
+	// it forward to `options.next` depending on the maximum value,
+	// `options.max`.
+	//
+	function _compute (delta, computed, options) {
+	  var current = options.current,
+	      next    = options.next,
+	      max     = options.max,
+	      round  = delta > 0 ? Math.floor : Math.ceil;
+	      
+	  if (delta) {
+	    computed[next] += round.call(null, delta / max);
+	    computed[current] += delta % max;
+	  }
+	  
+	  if (Math.abs(computed[current]) >= max) {
+	    computed[next] += round.call(null, computed[current] / max)
+	    computed[current] = computed[current] % max;
+	  }
+
+	  return computed;
+	}
+
+
+	//
+	// ### @private monthDays (month, year)
+	// #### @month {Number} Month to get days for.
+	// #### @year {Number} Year of the month to get days for.
+	// Returns the number of days in the specified `month` observing
+	// leap years.
+	//
+	var months = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+	function monthDays (month, year) {    
+	  if (((year % 100 !== 0 && year % 4 === 0) 
+	    || year % 400 === 0) && month === 1) {
+	    return 29;
+	  }
+	  
+	  return months[month];
+	}
+
+/***/ },
+/* 12 */
+/***/ function(module, exports) {
+
+	module.exports = require("json-stringify-safe");
+
+/***/ },
+/* 13 */
+/***/ function(module, exports) {
+
+	module.exports = require("auth0@2.1.0");
+
+/***/ },
+/* 14 */
+/***/ function(module, exports) {
+
+	module.exports = require("async");
+
+/***/ },
+/* 15 */
+/***/ function(module, exports) {
+
+	module.exports = require("moment");
+
+/***/ },
+/* 16 */
+/***/ function(module, exports) {
+
+	module.exports = require("useragent");
+
+/***/ },
+/* 17 */
+/***/ function(module, exports) {
+
+	module.exports = require("express");
+
+/***/ },
+/* 18 */
+/***/ function(module, exports, __webpack_require__) {
+
+	exports.fromConnect = exports.fromExpress = fromConnect;
+	exports.fromHapi = fromHapi;
+	exports.fromServer = exports.fromRestify = fromServer;
+
+
+	// API functions
+
+	function fromConnect (connectFn) {
+	    return function (context, req, res) {
+	        var normalizeRouteRx = createRouteNormalizationRx(req.x_wt.jtn);
+
+	        req.originalUrl = req.url;
+	        req.url = req.url.replace(normalizeRouteRx, '/');
+	        req.webtaskContext = attachStorageHelpers(context);
+
+	        return connectFn(req, res);
+	    };
+	}
+
+	function fromHapi(server) {
+	    var webtaskContext;
+
+	    server.ext('onRequest', function (request, response) {
+	        var normalizeRouteRx = createRouteNormalizationRx(request.x_wt.jtn);
+
+	        request.setUrl(request.url.replace(normalizeRouteRx, '/'));
+	        request.webtaskContext = webtaskContext;
+	    });
+
+	    return function (context, req, res) {
+	        var dispatchFn = server._dispatch();
+
+	        webtaskContext = attachStorageHelpers(context);
+
+	        dispatchFn(req, res);
+	    };
+	}
+
+	function fromServer(httpServer) {
+	    return function (context, req, res) {
+	        var normalizeRouteRx = createRouteNormalizationRx(req.x_wt.jtn);
+
+	        req.originalUrl = req.url;
+	        req.url = req.url.replace(normalizeRouteRx, '/');
+	        req.webtaskContext = attachStorageHelpers(context);
+
+	        return httpServer.emit('request', req, res);
+	    };
+	}
+
+
+	// Helper functions
+
+	function createRouteNormalizationRx(jtn) {
+	    var normalizeRouteBase = '^\/api\/run\/[^\/]+\/';
+	    var normalizeNamedRoute = '(?:[^\/\?#]*\/?)?';
+
+	    return new RegExp(
+	        normalizeRouteBase + (
+	        jtn
+	            ?   normalizeNamedRoute
+	            :   ''
+	    ));
+	}
+
+	function attachStorageHelpers(context) {
+	    context.read = context.secrets.EXT_STORAGE_URL
+	        ?   readFromPath
+	        :   readNotAvailable;
+	    context.write = context.secrets.EXT_STORAGE_URL
+	        ?   writeToPath
+	        :   writeNotAvailable;
+
+	    return context;
+
+
+	    function readNotAvailable(path, options, cb) {
+	        var Boom = __webpack_require__(19);
+
+	        if (typeof options === 'function') {
+	            cb = options;
+	            options = {};
+	        }
+
+	        cb(Boom.preconditionFailed('Storage is not available in this context'));
+	    }
+
+	    function readFromPath(path, options, cb) {
+	        var Boom = __webpack_require__(19);
+	        var Request = __webpack_require__(9);
+
+	        if (typeof options === 'function') {
+	            cb = options;
+	            options = {};
+	        }
+
+	        Request({
+	            uri: context.secrets.EXT_STORAGE_URL,
+	            method: 'GET',
+	            headers: options.headers || {},
+	            qs: { path: path },
+	            json: true,
+	        }, function (err, res, body) {
+	            if (err) return cb(Boom.wrap(err, 502));
+	            if (res.statusCode === 404 && Object.hasOwnProperty.call(options, 'defaultValue')) return cb(null, options.defaultValue);
+	            if (res.statusCode >= 400) return cb(Boom.create(res.statusCode, body && body.message));
+
+	            cb(null, body);
+	        });
+	    }
+
+	    function writeNotAvailable(path, data, options, cb) {
+	        var Boom = __webpack_require__(19);
+
+	        if (typeof options === 'function') {
+	            cb = options;
+	            options = {};
+	        }
+
+	        cb(Boom.preconditionFailed('Storage is not available in this context'));
+	    }
+
+	    function writeToPath(path, data, options, cb) {
+	        var Boom = __webpack_require__(19);
+	        var Request = __webpack_require__(9);
+
+	        if (typeof options === 'function') {
+	            cb = options;
+	            options = {};
+	        }
+
+	        Request({
+	            uri: context.secrets.EXT_STORAGE_URL,
+	            method: 'PUT',
+	            headers: options.headers || {},
+	            qs: { path: path },
+	            body: data,
+	        }, function (err, res, body) {
+	            if (err) return cb(Boom.wrap(err, 502));
+	            if (res.statusCode >= 400) return cb(Boom.create(res.statusCode, body && body.message));
+
+	            cb(null);
+	        });
+	    }
+	}
+
+
+/***/ },
+/* 19 */
+/***/ function(module, exports) {
+
+	module.exports = require("boom");
+
+/***/ },
+/* 20 */
+/***/ function(module, exports) {
+
+	module.exports = require("superagent");
+
+/***/ },
+/* 21 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/* WEBPACK VAR INJECTION */(function(setImmediate) {const LRU = __webpack_require__(24);
+	const _ = __webpack_require__(25);
+	const lru_params =  [ 'max', 'maxAge', 'length', 'dispose', 'stale' ];
+
+	module.exports = function (options) {
+	  var cache = new LRU(_.pick(options, lru_params));
+	  var load = options.load;
+	  var hash = options.hash;
+
+	  var result = function () {
+	    var args = _.toArray(arguments);
+	    var parameters = args.slice(0, -1);
+	    var callback = args.slice(-1).pop();
+
+	    var key;
+
+	    if (parameters.length === 0 && !hash) {
+	      //the load function only receives callback.
+	      key = '_';
+	    } else {
+	      key = hash.apply(options, parameters);
+	    }
+
+	    var fromCache = cache.get(key);
+
+	    if (fromCache) {
+	      return setImmediate.apply(null, [callback, null].concat(fromCache));
+	    }
+
+	    load.apply(null, parameters.concat(function (err) {
+	      if (err) {
+	        return callback(err);
+	      }
+
+	      cache.set(key, _.toArray(arguments).slice(1));
+
+	      return callback.apply(null, arguments);
+
+	    }));
+
+	  };
+
+	  result.keys = cache.keys.bind(cache);
+
+	  return result;
+	};
+
+
+	module.exports.sync = function (options) {
+	  var cache = new LRU(_.pick(options, lru_params));
+	  var load = options.load;
+	  var hash = options.hash;
+
+	  var result = function () {
+	    var args = _.toArray(arguments);
+
+	    var key = hash.apply(options, args);
+
+	    var fromCache = cache.get(key);
+
+	    if (fromCache) {
+	      return fromCache;
+	    }
+
+	    var result = load.apply(null, args);
+
+	    cache.set(key, result);
+
+	    return result;
+	  };
+
+	  result.keys = cache.keys.bind(cache);
+
+	  return result;
+	};
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(22).setImmediate))
+
+/***/ },
+/* 22 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/* WEBPACK VAR INJECTION */(function(setImmediate, clearImmediate) {var nextTick = __webpack_require__(23).nextTick;
+	var apply = Function.prototype.apply;
+	var slice = Array.prototype.slice;
+	var immediateIds = {};
+	var nextImmediateId = 0;
+
+	// DOM APIs, for completeness
+
+	exports.setTimeout = function() {
+	  return new Timeout(apply.call(setTimeout, window, arguments), clearTimeout);
+	};
+	exports.setInterval = function() {
+	  return new Timeout(apply.call(setInterval, window, arguments), clearInterval);
+	};
+	exports.clearTimeout =
+	exports.clearInterval = function(timeout) { timeout.close(); };
+
+	function Timeout(id, clearFn) {
+	  this._id = id;
+	  this._clearFn = clearFn;
+	}
+	Timeout.prototype.unref = Timeout.prototype.ref = function() {};
+	Timeout.prototype.close = function() {
+	  this._clearFn.call(window, this._id);
+	};
+
+	// Does not start the time, just sets up the members needed.
+	exports.enroll = function(item, msecs) {
+	  clearTimeout(item._idleTimeoutId);
+	  item._idleTimeout = msecs;
+	};
+
+	exports.unenroll = function(item) {
+	  clearTimeout(item._idleTimeoutId);
+	  item._idleTimeout = -1;
+	};
+
+	exports._unrefActive = exports.active = function(item) {
+	  clearTimeout(item._idleTimeoutId);
+
+	  var msecs = item._idleTimeout;
+	  if (msecs >= 0) {
+	    item._idleTimeoutId = setTimeout(function onTimeout() {
+	      if (item._onTimeout)
+	        item._onTimeout();
+	    }, msecs);
+	  }
+	};
+
+	// That's not how node.js implements it but the exposed api is the same.
+	exports.setImmediate = typeof setImmediate === "function" ? setImmediate : function(fn) {
+	  var id = nextImmediateId++;
+	  var args = arguments.length < 2 ? false : slice.call(arguments, 1);
+
+	  immediateIds[id] = true;
+
+	  nextTick(function onNextTick() {
+	    if (immediateIds[id]) {
+	      // fn.call() is faster so we optimize for the common use-case
+	      // @see http://jsperf.com/call-apply-segu
+	      if (args) {
+	        fn.apply(null, args);
+	      } else {
+	        fn.call(null);
+	      }
+	      // Prevent ids from leaking
+	      exports.clearImmediate(id);
+	    }
+	  });
+
+	  return id;
+	};
+
+	exports.clearImmediate = typeof clearImmediate === "function" ? clearImmediate : function(id) {
+	  delete immediateIds[id];
+	};
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(22).setImmediate, __webpack_require__(22).clearImmediate))
+
+/***/ },
+/* 23 */
+/***/ function(module, exports) {
+
+	// shim for using process in browser
+
+	var process = module.exports = {};
+	var queue = [];
+	var draining = false;
+	var currentQueue;
+	var queueIndex = -1;
+
+	function cleanUpNextTick() {
+	    draining = false;
+	    if (currentQueue.length) {
+	        queue = currentQueue.concat(queue);
+	    } else {
+	        queueIndex = -1;
+	    }
+	    if (queue.length) {
+	        drainQueue();
+	    }
+	}
+
+	function drainQueue() {
+	    if (draining) {
+	        return;
+	    }
+	    var timeout = setTimeout(cleanUpNextTick);
+	    draining = true;
+
+	    var len = queue.length;
+	    while(len) {
+	        currentQueue = queue;
+	        queue = [];
+	        while (++queueIndex < len) {
+	            if (currentQueue) {
+	                currentQueue[queueIndex].run();
+	            }
+	        }
+	        queueIndex = -1;
+	        len = queue.length;
+	    }
+	    currentQueue = null;
+	    draining = false;
+	    clearTimeout(timeout);
+	}
+
+	process.nextTick = function (fun) {
+	    var args = new Array(arguments.length - 1);
+	    if (arguments.length > 1) {
+	        for (var i = 1; i < arguments.length; i++) {
+	            args[i - 1] = arguments[i];
+	        }
+	    }
+	    queue.push(new Item(fun, args));
+	    if (queue.length === 1 && !draining) {
+	        setTimeout(drainQueue, 0);
+	    }
+	};
+
+	// v8 likes predictible objects
+	function Item(fun, array) {
+	    this.fun = fun;
+	    this.array = array;
+	}
+	Item.prototype.run = function () {
+	    this.fun.apply(null, this.array);
+	};
+	process.title = 'browser';
+	process.browser = true;
+	process.env = {};
+	process.argv = [];
+	process.version = ''; // empty string to avoid regexp issues
+	process.versions = {};
+
+	function noop() {}
+
+	process.on = noop;
+	process.addListener = noop;
+	process.once = noop;
+	process.off = noop;
+	process.removeListener = noop;
+	process.removeAllListeners = noop;
+	process.emit = noop;
+
+	process.binding = function (name) {
+	    throw new Error('process.binding is not supported');
+	};
+
+	process.cwd = function () { return '/' };
+	process.chdir = function (dir) {
+	    throw new Error('process.chdir is not supported');
+	};
+	process.umask = function() { return 0; };
+
+
+/***/ },
+/* 24 */
+/***/ function(module, exports) {
+
+	module.exports = require("lru-cache");
+
+/***/ },
+/* 25 */
+/***/ function(module, exports) {
+
+	module.exports = require("lodash");
+
+/***/ }
+/******/ ]);

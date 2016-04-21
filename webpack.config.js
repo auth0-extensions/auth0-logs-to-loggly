@@ -50,11 +50,11 @@ module.exports = {
   plugins: [
     new Webpack.optimize.DedupePlugin(),
     new Webpack.NoErrorsPlugin(),
-    new Webpack.optimize.UglifyJsPlugin({
-      compress: {
-        warnings: false
-      }
-    }),
+    // new Webpack.optimize.UglifyJsPlugin({
+    //   compress: {
+    //     warnings: false
+    //   }
+    // }),
     new WebpackOnBuildPlugin(function() {
       var path   = './build/bundle.js';
       var bundle = fs.readFileSync(path, 'utf8');
@@ -68,5 +68,12 @@ module.exports = {
     root: __dirname,
     alias: {},
   },
-  node: false,
+  node: {
+    console:    false,
+    global:     false,
+    process:    false,
+    Buffer:     false,
+    __filename: false,
+    __dirname:  false
+  }
 }
