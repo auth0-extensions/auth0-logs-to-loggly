@@ -48,15 +48,14 @@ module.exports =
 	'use strict';
 
 	var Loggly = __webpack_require__(1);
-	var Auth0 = __webpack_require__(13);
-	var async = __webpack_require__(14);
-	var moment = __webpack_require__(15);
-	var useragent = __webpack_require__(16);
-	var express = __webpack_require__(17);
-	var Webtask = __webpack_require__(18);
+	var async = __webpack_require__(13);
+	var moment = __webpack_require__(14);
+	var useragent = __webpack_require__(15);
+	var express = __webpack_require__(16);
+	var Webtask = __webpack_require__(17);
 	var app = express();
-	var Request = __webpack_require__(20);
-	var memoizer = __webpack_require__(21);
+	var Request = __webpack_require__(9);
+	var memoizer = __webpack_require__(19);
 
 	function lastLogCheckpoint(req, res) {
 	  var ctx = req.webtaskContext;
@@ -73,12 +72,6 @@ module.exports =
 	  req.webtaskContext.storage.get(function (err, data) {
 
 	    var startCheckpointId = typeof data === 'undefined' ? null : data.checkpointId;
-
-	    // Initialize both clients.
-	    var auth0 = new Auth0.ManagementClient({
-	      domain: ctx.data.AUTH0_DOMAIN,
-	      token: req.access_token
-	    });
 
 	    var loggly = Loggly.createClient({
 	      token: ctx.data.LOGGLY_CUSTOMER_TOKEN,
@@ -343,31 +336,50 @@ module.exports =
 	function getLogsFromAuth0(domain, token, take, from, cb) {
 	  var url = 'https://' + domain + '/api/v2/logs';
 
-	  Request.get(url).set('Authorization', 'Bearer ' + token).set('Accept', 'application/json').query({ take: take }).query({ from: from }).query({ sort: 'date:1' }).query({ per_page: take }).end(function (err, res) {
-	    if (err || !res.ok) {
+	  Request({
+	    method: 'GET',
+	    url: url,
+	    json: true,
+	    qs: {
+	      take: take,
+	      from: from,
+	      sort: 'date:1',
+	      per_page: take
+	    },
+	    headers: {
+	      Authorization: 'Bearer ' + token,
+	      Accept: 'application/json'
+	    }
+	  }, function (err, res, body) {
+	    if (err) {
 	      console.log('Error getting logs', err);
 	      cb(null, err);
 	    } else {
 	      console.log('x-ratelimit-limit: ', res.headers['x-ratelimit-limit']);
 	      console.log('x-ratelimit-remaining: ', res.headers['x-ratelimit-remaining']);
 	      console.log('x-ratelimit-reset: ', res.headers['x-ratelimit-reset']);
-	      cb(res.body);
+	      cb(body);
 	    }
 	  });
 	}
 
 	var getTokenCached = memoizer({
 	  load: function load(apiUrl, audience, clientId, clientSecret, cb) {
-	    Request.post(apiUrl).send({
-	      audience: audience,
-	      grant_type: 'client_credentials',
-	      client_id: clientId,
-	      client_secret: clientSecret
-	    }).type('application/json').end(function (err, res) {
-	      if (err || !res.ok) {
+	    Request({
+	      method: 'POST',
+	      url: apiUrl,
+	      json: true,
+	      body: {
+	        audience: audience,
+	        grant_type: 'client_credentials',
+	        client_id: clientId,
+	        client_secret: clientSecret
+	      }
+	    }, function (err, res, body) {
+	      if (err) {
 	        cb(null, err);
 	      } else {
-	        cb(res.body.access_token);
+	        cb(body.access_token);
 	      }
 	    });
 	  },
@@ -2013,34 +2025,28 @@ module.exports =
 /* 13 */
 /***/ function(module, exports) {
 
-	module.exports = require("auth0@2.1.0");
+	module.exports = require("async");
 
 /***/ },
 /* 14 */
 /***/ function(module, exports) {
 
-	module.exports = require("async");
+	module.exports = require("moment");
 
 /***/ },
 /* 15 */
 /***/ function(module, exports) {
 
-	module.exports = require("moment");
+	module.exports = require("useragent");
 
 /***/ },
 /* 16 */
 /***/ function(module, exports) {
 
-	module.exports = require("useragent");
-
-/***/ },
-/* 17 */
-/***/ function(module, exports) {
-
 	module.exports = require("express");
 
 /***/ },
-/* 18 */
+/* 17 */
 /***/ function(module, exports, __webpack_require__) {
 
 	exports.fromConnect = exports.fromExpress = fromConnect;
@@ -2120,7 +2126,7 @@ module.exports =
 
 
 	    function readNotAvailable(path, options, cb) {
-	        var Boom = __webpack_require__(19);
+	        var Boom = __webpack_require__(18);
 
 	        if (typeof options === 'function') {
 	            cb = options;
@@ -2131,7 +2137,7 @@ module.exports =
 	    }
 
 	    function readFromPath(path, options, cb) {
-	        var Boom = __webpack_require__(19);
+	        var Boom = __webpack_require__(18);
 	        var Request = __webpack_require__(9);
 
 	        if (typeof options === 'function') {
@@ -2155,7 +2161,7 @@ module.exports =
 	    }
 
 	    function writeNotAvailable(path, data, options, cb) {
-	        var Boom = __webpack_require__(19);
+	        var Boom = __webpack_require__(18);
 
 	        if (typeof options === 'function') {
 	            cb = options;
@@ -2166,7 +2172,7 @@ module.exports =
 	    }
 
 	    function writeToPath(path, data, options, cb) {
-	        var Boom = __webpack_require__(19);
+	        var Boom = __webpack_require__(18);
 	        var Request = __webpack_require__(9);
 
 	        if (typeof options === 'function') {
@@ -2191,23 +2197,17 @@ module.exports =
 
 
 /***/ },
-/* 19 */
+/* 18 */
 /***/ function(module, exports) {
 
 	module.exports = require("boom");
 
 /***/ },
-/* 20 */
-/***/ function(module, exports) {
-
-	module.exports = require("superagent");
-
-/***/ },
-/* 21 */
+/* 19 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* WEBPACK VAR INJECTION */(function(setImmediate) {const LRU = __webpack_require__(24);
-	const _ = __webpack_require__(25);
+	/* WEBPACK VAR INJECTION */(function(setImmediate) {const LRU = __webpack_require__(22);
+	const _ = __webpack_require__(23);
 	const lru_params =  [ 'max', 'maxAge', 'length', 'dispose', 'stale' ];
 
 	module.exports = function (options) {
@@ -2281,13 +2281,13 @@ module.exports =
 
 	  return result;
 	};
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(22).setImmediate))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(20).setImmediate))
 
 /***/ },
-/* 22 */
+/* 20 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* WEBPACK VAR INJECTION */(function(setImmediate, clearImmediate) {var nextTick = __webpack_require__(23).nextTick;
+	/* WEBPACK VAR INJECTION */(function(setImmediate, clearImmediate) {var nextTick = __webpack_require__(21).nextTick;
 	var apply = Function.prototype.apply;
 	var slice = Array.prototype.slice;
 	var immediateIds = {};
@@ -2363,10 +2363,10 @@ module.exports =
 	exports.clearImmediate = typeof clearImmediate === "function" ? clearImmediate : function(id) {
 	  delete immediateIds[id];
 	};
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(22).setImmediate, __webpack_require__(22).clearImmediate))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(20).setImmediate, __webpack_require__(20).clearImmediate))
 
 /***/ },
-/* 23 */
+/* 21 */
 /***/ function(module, exports) {
 
 	// shim for using process in browser
@@ -2463,13 +2463,13 @@ module.exports =
 
 
 /***/ },
-/* 24 */
+/* 22 */
 /***/ function(module, exports) {
 
 	module.exports = require("lru-cache");
 
 /***/ },
-/* 25 */
+/* 23 */
 /***/ function(module, exports) {
 
 	module.exports = require("lodash");
