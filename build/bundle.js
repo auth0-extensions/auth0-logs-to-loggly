@@ -47,6 +47,10 @@ module.exports =
 
 	'use strict';
 
+	var _logTypes;
+
+	function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
 	var Loggly = __webpack_require__(1);
 	var async = __webpack_require__(13);
 	var moment = __webpack_require__(14);
@@ -55,7 +59,7 @@ module.exports =
 	var Webtask = __webpack_require__(17);
 	var app = express();
 	var Request = __webpack_require__(9);
-	var memoizer = __webpack_require__(19);
+	var memoizer = __webpack_require__(18);
 
 	function lastLogCheckpoint(req, res) {
 	  var ctx = req.webtaskContext;
@@ -135,7 +139,7 @@ module.exports =
 	      // loggly
 	      loggly.log(context.logs, function (err) {
 	        if (err) {
-	          console.log('Error sending logs to Sumologic', err);
+	          console.log('Error sending logs to Loggly', err);
 	          return callback(err);
 	        }
 
@@ -176,7 +180,7 @@ module.exports =
 	  });
 	}
 
-	var logTypes = {
+	var logTypes = (_logTypes = {
 	  's': {
 	    event: 'Success Login',
 	    level: 1 // Info
@@ -185,8 +189,16 @@ module.exports =
 	    event: 'Success Exchange',
 	    level: 1 // Info
 	  },
+	  'seccft': {
+	    event: 'Success Exchange (Client Credentials)',
+	    level: 1 // Info
+	  },
 	  'feacft': {
 	    event: 'Failed Exchange',
+	    level: 3 // Error
+	  },
+	  'feccft': {
+	    event: 'Failed Exchange (Client Credentials)',
 	    level: 3 // Error
 	  },
 	  'f': {
@@ -331,7 +343,28 @@ module.exports =
 	    event: 'Failed User Deletion',
 	    level: 3 // Error
 	  }
-	};
+	}, _defineProperty(_logTypes, 'fapi', {
+	  event: 'Failed API Operation',
+	  level: 3 // Error
+	}), _defineProperty(_logTypes, 'limit_wc', {
+	  event: 'Blocked Account',
+	  level: 3 // Error
+	}), _defineProperty(_logTypes, 'limit_mu', {
+	  event: 'Blocked IP Address',
+	  level: 3 // Error
+	}), _defineProperty(_logTypes, 'slo', {
+	  event: 'Success Logout',
+	  level: 1 // Info
+	}), _defineProperty(_logTypes, 'flo', {
+	  event: ' Failed Logout',
+	  level: 3 // Error
+	}), _defineProperty(_logTypes, 'sd', {
+	  event: 'Success Delegation',
+	  level: 1 // Info
+	}), _defineProperty(_logTypes, 'fd', {
+	  event: 'Failed Delegation',
+	  level: 3 // Error
+	}), _logTypes);
 
 	function getLogsFromAuth0(domain, token, take, from, cb) {
 	  var url = 'https://' + domain + '/api/v2/logs';
@@ -355,9 +388,6 @@ module.exports =
 	      console.log('Error getting logs', err);
 	      cb(null, err);
 	    } else {
-	      console.log('x-ratelimit-limit: ', res.headers['x-ratelimit-limit']);
-	      console.log('x-ratelimit-remaining: ', res.headers['x-ratelimit-remaining']);
-	      console.log('x-ratelimit-reset: ', res.headers['x-ratelimit-reset']);
 	      cb(body);
 	    }
 	  });
@@ -1189,7 +1219,7 @@ module.exports =
 	* JavaScript TimeSpan Library
 	*
 	* Copyright (c) 2010 Michael Stum, Charlie Robbins
-	* 
+	*
 	* Permission is hereby granted, free of charge, to any person obtaining
 	* a copy of this software and associated documentation files (the
 	* "Software"), to deal in the Software without restriction, including
@@ -1197,10 +1227,10 @@ module.exports =
 	* distribute, sublicense, and/or sell copies of the Software, and to
 	* permit persons to whom the Software is furnished to do so, subject to
 	* the following conditions:
-	* 
+	*
 	* The above copyright notice and this permission notice shall be
 	* included in all copies or substantial portions of the Software.
-	* 
+	*
 	* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
 	* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
 	* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
@@ -1232,28 +1262,28 @@ module.exports =
 	// #### @hours {Number} Number of hours for this instance.
 	// #### @days {Number} Number of days for this instance.
 	// Constructor function for the `TimeSpan` object which represents a length
-	// of positive or negative milliseconds componentized into milliseconds, 
+	// of positive or negative milliseconds componentized into milliseconds,
 	// seconds, hours, and days.
 	//
 	var TimeSpan = exports.TimeSpan = function (milliseconds, seconds, minutes, hours, days) {
 	  this.msecs = 0;
-	  
+
 	  if (isNumeric(days)) {
 	    this.msecs += (days * msecPerDay);
 	  }
-	  
+
 	  if (isNumeric(hours)) {
 	    this.msecs += (hours * msecPerHour);
 	  }
-	  
+
 	  if (isNumeric(minutes)) {
 	    this.msecs += (minutes * msecPerMinute);
 	  }
-	  
+
 	  if (isNumeric(seconds)) {
 	    this.msecs += (seconds * msecPerSecond);
 	  }
-	  
+
 	  if (isNumeric(milliseconds)) {
 	    this.msecs += milliseconds;
 	  }
@@ -1324,23 +1354,23 @@ module.exports =
 	//
 	exports.parse = function (str) {
 	  var match, milliseconds;
-	  
+
 	  function parseMilliseconds (value) {
 	    return value ? parseFloat('0' + value) * 1000 : 0;
 	  }
-	  
-	  // If we match against a full TimeSpan: 
+
+	  // If we match against a full TimeSpan:
 	  //   [days]:[hours]:[minutes]:[seconds].[milliseconds]?
 	  if ((match = str.match(timeSpanWithDays))) {
 	    return new TimeSpan(parseMilliseconds(match[5]), match[4], match[3], match[2], match[1]);
 	  }
-	  
+
 	  // If we match against a partial TimeSpan:
 	  //   [hours]:[minutes]:[seconds].[milliseconds]?
 	  if ((match = str.match(timeSpanNoDays))) {
 	    return new TimeSpan(parseMilliseconds(match[4]), match[3], match[2], match[1], 0);
 	  }
-	  
+
 	  return null;
 	};
 
@@ -1356,7 +1386,7 @@ module.exports =
 	    compute: function (delta, computed) {
 	      return _compute(delta, computed, {
 	        current: 'milliseconds',
-	        next: 'seconds', 
+	        next: 'seconds',
 	        max: 1000
 	      });
 	    }
@@ -1366,7 +1396,7 @@ module.exports =
 	    compute: function (delta, computed) {
 	      return _compute(delta, computed, {
 	        current: 'seconds',
-	        next: 'minutes', 
+	        next: 'minutes',
 	        max: 60
 	      });
 	    }
@@ -1376,7 +1406,7 @@ module.exports =
 	    compute: function (delta, computed) {
 	      return _compute(delta, computed, {
 	        current: 'minutes',
-	        next: 'hours', 
+	        next: 'hours',
 	        max: 60
 	      });
 	    }
@@ -1386,7 +1416,7 @@ module.exports =
 	    compute: function (delta, computed) {
 	      return _compute(delta, computed, {
 	        current: 'hours',
-	        next: 'days', 
+	        next: 'days',
 	        max: 24
 	      });
 	    }
@@ -1398,40 +1428,40 @@ module.exports =
 	          sign     = delta >= 0 ? 1 : -1,
 	          opsign   = delta >= 0 ? -1 : 1,
 	          clean    = 0;
-	      
+
 	      function update (months) {
-	        if (months < 0) { 
+	        if (months < 0) {
 	          computed.years -= 1;
 	          return 11;
 	        }
-	        else if (months > 11) { 
+	        else if (months > 11) {
 	          computed.years += 1;
-	          return 0 
+	          return 0
 	        }
-	        
+
 	        return months;
 	      }
-	      
-	      if (delta) {          
+
+	      if (delta) {
 	        while (Math.abs(delta) >= days) {
 	          computed.months += sign * 1;
 	          computed.months = update(computed.months);
 	          delta += opsign * days;
 	          days = monthDays(computed.months, computed.years);
 	        }
-	      
+
 	        computed.days += (opsign * delta);
 	      }
-	      
+
 	      if (computed.days < 0) { clean = -1 }
 	      else if (computed.days > months[computed.months]) { clean = 1 }
-	      
+
 	      if (clean === -1 || clean === 1) {
 	        computed.months += clean;
 	        computed.months = update(computed.months);
 	        computed.days = months[computed.months] + computed.days;
 	      }
-	            
+
 	      return computed;
 	    }
 	  },
@@ -1439,16 +1469,16 @@ module.exports =
 	    exp: /(\d+)month[s]?/i,
 	    compute: function (delta, computed) {
 	      var round = delta > 0 ? Math.floor : Math.ceil;
-	      if (delta) { 
+	      if (delta) {
 	        computed.years += round.call(null, delta / 12);
 	        computed.months += delta % 12;
 	      }
-	      
+
 	      if (computed.months > 11) {
 	        computed.years += Math.floor((computed.months + 1) / 12);
 	        computed.months = ((computed.months + 1) % 12) - 1;
 	      }
-	      
+
 	      return computed;
 	    }
 	  },
@@ -1496,13 +1526,13 @@ module.exports =
 	      sign;
 
 	  //
-	  // If Date string supplied actually conforms 
+	  // If Date string supplied actually conforms
 	  // to UTC Time (ISO8601), return a new Date.
 	  //
 	  if (!isNaN(dateTime)) {
 	    return new Date(dateTime);
 	  }
-	  
+
 	  //
 	  // Create the `RegExp` for the end component
 	  // of the target `str` to parse.
@@ -1510,7 +1540,7 @@ module.exports =
 	  parserNames.forEach(function (group) {
 	    zulu += '(\\d+[a-zA-Z]+)?';
 	  });
-	  
+
 	  if (/^NOW/i.test(str)) {
 	    //
 	    // If the target `str` is a liberal `NOW-*`,
@@ -1531,22 +1561,22 @@ module.exports =
 	    dateTime = str.match(new RegExp(iso, 'i'));
 	    dateTime = Date.parse(dateTime[1]);
 	  }
-	  
+
 	  //
-	  // If there was no match on either part then 
+	  // If there was no match on either part then
 	  // it must be a bad value.
 	  //
 	  if (!dateTime || !(modifiers = str.match(new RegExp(zulu, 'i')))) {
 	    return null;
 	  }
-	    
+
 	  //
 	  // Create a new `Date` object from the `ISO8601`
 	  // component of the target `str`.
 	  //
 	  dateTime = new Date(dateTime);
 	  sign = modifiers[1] === '+' ? 1 : -1;
-	  
+
 	  //
 	  // Create an Object-literal for consistently accessing
 	  // the various components of the computed Date.
@@ -1560,10 +1590,10 @@ module.exports =
 	    months: dateTime.getMonth(),
 	    years: dateTime.getFullYear()
 	  };
-	  
+
 	  //
 	  // Parse the individual component spans (months, years, etc)
-	  // from the modifier strings that we parsed from the end 
+	  // from the modifier strings that we parsed from the end
 	  // of the target `str`.
 	  //
 	  modifiers.slice(2).filter(Boolean).forEach(function (modifier) {
@@ -1572,19 +1602,19 @@ module.exports =
 	      if (!(match = modifier.match(parsers[name].exp))) {
 	        return;
 	      }
-	      
+
 	      diff[name] = sign * parseInt(match[1], 10);
 	    })
 	  });
-	  
+
 	  //
-	  // Compute the total `diff` by iteratively computing 
+	  // Compute the total `diff` by iteratively computing
 	  // the partial components from smallest to largest.
 	  //
-	  parserNames.forEach(function (name) {    
+	  parserNames.forEach(function (name) {
 	    computed = parsers[name].compute(diff[name], computed);
 	  });
-	  
+
 	  return new Date(
 	    computed.years,
 	    computed.months,
@@ -1608,15 +1638,15 @@ module.exports =
 	  if (typeof start === 'string') {
 	    start = exports.parseDate(start);
 	  }
-	  
+
 	  if (typeof end === 'string') {
 	    end = exports.parseDate(end);
 	  }
-	  
+
 	  if (!(start instanceof Date && end instanceof Date)) {
 	    return null;
 	  }
-	  
+
 	  var differenceMsecs = end.valueOf() - start.valueOf();
 	  if (abs) {
 	    differenceMsecs = Math.abs(differenceMsecs);
@@ -1664,7 +1694,7 @@ module.exports =
 
 	//
 	// ## Addition
-	// Methods for adding `TimeSpan` instances, 
+	// Methods for adding `TimeSpan` instances,
 	// milliseconds, seconds, hours, and days to other
 	// `TimeSpan` instances.
 	//
@@ -1696,7 +1726,7 @@ module.exports =
 	//
 	TimeSpan.prototype.addSeconds = function (seconds) {
 	  if (!isNumeric(seconds)) { return }
-	  
+
 	  this.msecs += (seconds * msecPerSecond);
 	};
 
@@ -1732,7 +1762,7 @@ module.exports =
 
 	//
 	// ## Subtraction
-	// Methods for subtracting `TimeSpan` instances, 
+	// Methods for subtracting `TimeSpan` instances,
 	// milliseconds, seconds, hours, and days from other
 	// `TimeSpan` instances.
 	//
@@ -1814,7 +1844,7 @@ module.exports =
 	  if (roundDown === true) {
 	    result = Math.floor(result);
 	  }
-	  
+
 	  return result;
 	};
 
@@ -1829,7 +1859,7 @@ module.exports =
 	  if (roundDown === true) {
 	    result = Math.floor(result);
 	  }
-	  
+
 	  return result;
 	};
 
@@ -1844,7 +1874,7 @@ module.exports =
 	  if (roundDown === true) {
 	    result = Math.floor(result);
 	  }
-	  
+
 	  return result;
 	};
 
@@ -1859,7 +1889,7 @@ module.exports =
 	  if (roundDown === true) {
 	    result = Math.floor(result);
 	  }
-	  
+
 	  return result;
 	};
 
@@ -1874,7 +1904,7 @@ module.exports =
 	  if (roundDown === true) {
 	    result = Math.floor(result);
 	  }
-	  
+
 	  return result;
 	};
 
@@ -1936,7 +1966,7 @@ module.exports =
 	};
 
 	//
-	// ### function toString () 
+	// ### function toString ()
 	// Returns a string representation of this `TimeSpan`
 	// instance according to current `format`.
 	//
@@ -1946,7 +1976,7 @@ module.exports =
 	};
 
 	//
-	// ### @private function _format () 
+	// ### @private function _format ()
 	// Returns the default string representation of this instance.
 	//
 	TimeSpan.prototype._format = function () {
@@ -1959,9 +1989,9 @@ module.exports =
 	};
 
 	//
-	// ### @private function isNumeric (input) 
+	// ### @private function isNumeric (input)
 	// #### @input {Number} Value to check numeric quality of.
-	// Returns a value indicating the numeric quality of the 
+	// Returns a value indicating the numeric quality of the
 	// specified `input`.
 	//
 	function isNumeric (input) {
@@ -1974,7 +2004,7 @@ module.exports =
 	// #### @computed {Object} Currently computed date.
 	// #### @options {Object} Options for the computation
 	// Performs carry forward addition or subtraction for the
-	// `options.current` component of the `computed` date, carrying 
+	// `options.current` component of the `computed` date, carrying
 	// it forward to `options.next` depending on the maximum value,
 	// `options.max`.
 	//
@@ -1983,12 +2013,12 @@ module.exports =
 	      next    = options.next,
 	      max     = options.max,
 	      round  = delta > 0 ? Math.floor : Math.ceil;
-	      
+
 	  if (delta) {
 	    computed[next] += round.call(null, delta / max);
 	    computed[current] += delta % max;
 	  }
-	  
+
 	  if (Math.abs(computed[current]) >= max) {
 	    computed[next] += round.call(null, computed[current] / max)
 	    computed[current] = computed[current] % max;
@@ -2006,12 +2036,12 @@ module.exports =
 	// leap years.
 	//
 	var months = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-	function monthDays (month, year) {    
-	  if (((year % 100 !== 0 && year % 4 === 0) 
+	function monthDays (month, year) {
+	  if (((year % 100 !== 0 && year % 4 === 0)
 	    || year % 400 === 0) && month === 1) {
 	    return 29;
 	  }
-	  
+
 	  return months[month];
 	}
 
@@ -2047,205 +2077,84 @@ module.exports =
 
 /***/ },
 /* 17 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ function(module, exports) {
 
-	exports.fromConnect = exports.fromExpress = fromConnect;
-	exports.fromHapi = fromHapi;
-	exports.fromServer = exports.fromRestify = fromServer;
-
-
-	// API functions
-
-	function fromConnect (connectFn) {
-	    return function (context, req, res) {
-	        var normalizeRouteRx = createRouteNormalizationRx(req.x_wt.jtn);
-
-	        req.originalUrl = req.url;
-	        req.url = req.url.replace(normalizeRouteRx, '/');
-	        req.webtaskContext = attachStorageHelpers(context);
-
-	        return connectFn(req, res);
-	    };
-	}
-
-	function fromHapi(server) {
-	    var webtaskContext;
-
-	    server.ext('onRequest', function (request, response) {
-	        var normalizeRouteRx = createRouteNormalizationRx(request.x_wt.jtn);
-
-	        request.setUrl(request.url.replace(normalizeRouteRx, '/'));
-	        request.webtaskContext = webtaskContext;
-	    });
-
-	    return function (context, req, res) {
-	        var dispatchFn = server._dispatch();
-
-	        webtaskContext = attachStorageHelpers(context);
-
-	        dispatchFn(req, res);
-	    };
-	}
-
-	function fromServer(httpServer) {
-	    return function (context, req, res) {
-	        var normalizeRouteRx = createRouteNormalizationRx(req.x_wt.jtn);
-
-	        req.originalUrl = req.url;
-	        req.url = req.url.replace(normalizeRouteRx, '/');
-	        req.webtaskContext = attachStorageHelpers(context);
-
-	        return httpServer.emit('request', req, res);
-	    };
-	}
-
-
-	// Helper functions
-
-	function createRouteNormalizationRx(jtn) {
-	    var normalizeRouteBase = '^\/api\/run\/[^\/]+\/';
-	    var normalizeNamedRoute = '(?:[^\/\?#]*\/?)?';
-
-	    return new RegExp(
-	        normalizeRouteBase + (
-	        jtn
-	            ?   normalizeNamedRoute
-	            :   ''
-	    ));
-	}
-
-	function attachStorageHelpers(context) {
-	    context.read = context.secrets.EXT_STORAGE_URL
-	        ?   readFromPath
-	        :   readNotAvailable;
-	    context.write = context.secrets.EXT_STORAGE_URL
-	        ?   writeToPath
-	        :   writeNotAvailable;
-
-	    return context;
-
-
-	    function readNotAvailable(path, options, cb) {
-	        var Boom = __webpack_require__(18);
-
-	        if (typeof options === 'function') {
-	            cb = options;
-	            options = {};
-	        }
-
-	        cb(Boom.preconditionFailed('Storage is not available in this context'));
-	    }
-
-	    function readFromPath(path, options, cb) {
-	        var Boom = __webpack_require__(18);
-	        var Request = __webpack_require__(9);
-
-	        if (typeof options === 'function') {
-	            cb = options;
-	            options = {};
-	        }
-
-	        Request({
-	            uri: context.secrets.EXT_STORAGE_URL,
-	            method: 'GET',
-	            headers: options.headers || {},
-	            qs: { path: path },
-	            json: true,
-	        }, function (err, res, body) {
-	            if (err) return cb(Boom.wrap(err, 502));
-	            if (res.statusCode === 404 && Object.hasOwnProperty.call(options, 'defaultValue')) return cb(null, options.defaultValue);
-	            if (res.statusCode >= 400) return cb(Boom.create(res.statusCode, body && body.message));
-
-	            cb(null, body);
-	        });
-	    }
-
-	    function writeNotAvailable(path, data, options, cb) {
-	        var Boom = __webpack_require__(18);
-
-	        if (typeof options === 'function') {
-	            cb = options;
-	            options = {};
-	        }
-
-	        cb(Boom.preconditionFailed('Storage is not available in this context'));
-	    }
-
-	    function writeToPath(path, data, options, cb) {
-	        var Boom = __webpack_require__(18);
-	        var Request = __webpack_require__(9);
-
-	        if (typeof options === 'function') {
-	            cb = options;
-	            options = {};
-	        }
-
-	        Request({
-	            uri: context.secrets.EXT_STORAGE_URL,
-	            method: 'PUT',
-	            headers: options.headers || {},
-	            qs: { path: path },
-	            body: data,
-	        }, function (err, res, body) {
-	            if (err) return cb(Boom.wrap(err, 502));
-	            if (res.statusCode >= 400) return cb(Boom.create(res.statusCode, body && body.message));
-
-	            cb(null);
-	        });
-	    }
-	}
-
+	module.exports = require("webtask-tools");
 
 /***/ },
 /* 18 */
-/***/ function(module, exports) {
-
-	module.exports = require("boom");
-
-/***/ },
-/* 19 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* WEBPACK VAR INJECTION */(function(setImmediate) {const LRU = __webpack_require__(22);
-	const _ = __webpack_require__(23);
-	const lru_params =  [ 'max', 'maxAge', 'length', 'dispose', 'stale' ];
+	const LRU        = __webpack_require__(19);
+	const _          = __webpack_require__(20);
+	const lru_params = [ 'max', 'maxAge', 'length', 'dispose', 'stale' ];
 
 	module.exports = function (options) {
-	  var cache = new LRU(_.pick(options, lru_params));
-	  var load = options.load;
-	  var hash = options.hash;
+	  const cache      = new LRU(_.pick(options, lru_params));
+	  const load       = options.load;
+	  const hash       = options.hash;
+	  const bypass     = options.bypass;
+	  const itemMaxAge = options.itemMaxAge;
+	  const loading    = new Map();
 
-	  var result = function () {
-	    var args = _.toArray(arguments);
-	    var parameters = args.slice(0, -1);
-	    var callback = args.slice(-1).pop();
+	  if (options.disable) {
+	    return load;
+	  }
+
+	  const result = function () {
+	    const args       = _.toArray(arguments);
+	    const parameters = args.slice(0, -1);
+	    const callback   = args.slice(-1).pop();
+	    const self       = this;
 
 	    var key;
+
+	    if (bypass && bypass.apply(self, parameters)) {
+	      return load.apply(self, args);
+	    }
 
 	    if (parameters.length === 0 && !hash) {
 	      //the load function only receives callback.
 	      key = '_';
 	    } else {
-	      key = hash.apply(options, parameters);
+	      key = hash.apply(self, parameters);
 	    }
 
 	    var fromCache = cache.get(key);
 
 	    if (fromCache) {
-	      return setImmediate.apply(null, [callback, null].concat(fromCache));
+	      return callback.apply(null, [null].concat(fromCache));
 	    }
 
-	    load.apply(null, parameters.concat(function (err) {
-	      if (err) {
-	        return callback(err);
-	      }
+	    if (!loading.get(key)) {
+	      loading.set(key, []);
 
-	      cache.set(key, _.toArray(arguments).slice(1));
+	      load.apply(self, parameters.concat(function (err) {
+	        const args = _.toArray(arguments);
 
-	      return callback.apply(null, arguments);
+	        //we store the result only if the load didn't fail.
+	        if (!err) {
+	          const result = args.slice(1);
+	          if (itemMaxAge) {
+	            cache.set(key, result, itemMaxAge.apply(self, parameters.concat(result)));
+	          } else {
+	            cache.set(key, result);
+	          }
+	        }
 
-	    }));
+	        //immediately call every other callback waiting
+	        loading.get(key).forEach(function (callback) {
+	          callback.apply(null, args);
+	        });
 
+	        loading.delete(key);
+	        /////////
+
+	        callback.apply(null, args);
+	      }));
+	    } else {
+	      loading.get(key).push(callback);
+	    }
 	  };
 
 	  result.keys = cache.keys.bind(cache);
@@ -2255,14 +2164,26 @@ module.exports =
 
 
 	module.exports.sync = function (options) {
-	  var cache = new LRU(_.pick(options, lru_params));
-	  var load = options.load;
-	  var hash = options.hash;
+	  const cache = new LRU(_.pick(options, lru_params));
+	  const load = options.load;
+	  const hash = options.hash;
+	  const disable = options.disable;
+	  const bypass = options.bypass;
+	  const self = this;
+	  const itemMaxAge = options.itemMaxAge;
 
-	  var result = function () {
+	  if (disable) {
+	    return load;
+	  }
+
+	  const result = function () {
 	    var args = _.toArray(arguments);
 
-	    var key = hash.apply(options, args);
+	    if (bypass && bypass.apply(self, arguments)) {
+	      return load.apply(self, arguments);
+	    }
+
+	    var key = hash.apply(self, args);
 
 	    var fromCache = cache.get(key);
 
@@ -2270,9 +2191,12 @@ module.exports =
 	      return fromCache;
 	    }
 
-	    var result = load.apply(null, args);
-
-	    cache.set(key, result);
+	    const result = load.apply(self, args);
+	    if (itemMaxAge) {
+	      cache.set(key, result, itemMaxAge.apply(self, args.concat([ result ])));
+	    } else {
+	      cache.set(key, result);
+	    }
 
 	    return result;
 	  };
@@ -2281,195 +2205,16 @@ module.exports =
 
 	  return result;
 	};
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(20).setImmediate))
-
-/***/ },
-/* 20 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/* WEBPACK VAR INJECTION */(function(setImmediate, clearImmediate) {var nextTick = __webpack_require__(21).nextTick;
-	var apply = Function.prototype.apply;
-	var slice = Array.prototype.slice;
-	var immediateIds = {};
-	var nextImmediateId = 0;
-
-	// DOM APIs, for completeness
-
-	exports.setTimeout = function() {
-	  return new Timeout(apply.call(setTimeout, window, arguments), clearTimeout);
-	};
-	exports.setInterval = function() {
-	  return new Timeout(apply.call(setInterval, window, arguments), clearInterval);
-	};
-	exports.clearTimeout =
-	exports.clearInterval = function(timeout) { timeout.close(); };
-
-	function Timeout(id, clearFn) {
-	  this._id = id;
-	  this._clearFn = clearFn;
-	}
-	Timeout.prototype.unref = Timeout.prototype.ref = function() {};
-	Timeout.prototype.close = function() {
-	  this._clearFn.call(window, this._id);
-	};
-
-	// Does not start the time, just sets up the members needed.
-	exports.enroll = function(item, msecs) {
-	  clearTimeout(item._idleTimeoutId);
-	  item._idleTimeout = msecs;
-	};
-
-	exports.unenroll = function(item) {
-	  clearTimeout(item._idleTimeoutId);
-	  item._idleTimeout = -1;
-	};
-
-	exports._unrefActive = exports.active = function(item) {
-	  clearTimeout(item._idleTimeoutId);
-
-	  var msecs = item._idleTimeout;
-	  if (msecs >= 0) {
-	    item._idleTimeoutId = setTimeout(function onTimeout() {
-	      if (item._onTimeout)
-	        item._onTimeout();
-	    }, msecs);
-	  }
-	};
-
-	// That's not how node.js implements it but the exposed api is the same.
-	exports.setImmediate = typeof setImmediate === "function" ? setImmediate : function(fn) {
-	  var id = nextImmediateId++;
-	  var args = arguments.length < 2 ? false : slice.call(arguments, 1);
-
-	  immediateIds[id] = true;
-
-	  nextTick(function onNextTick() {
-	    if (immediateIds[id]) {
-	      // fn.call() is faster so we optimize for the common use-case
-	      // @see http://jsperf.com/call-apply-segu
-	      if (args) {
-	        fn.apply(null, args);
-	      } else {
-	        fn.call(null);
-	      }
-	      // Prevent ids from leaking
-	      exports.clearImmediate(id);
-	    }
-	  });
-
-	  return id;
-	};
-
-	exports.clearImmediate = typeof clearImmediate === "function" ? clearImmediate : function(id) {
-	  delete immediateIds[id];
-	};
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(20).setImmediate, __webpack_require__(20).clearImmediate))
-
-/***/ },
-/* 21 */
-/***/ function(module, exports) {
-
-	// shim for using process in browser
-
-	var process = module.exports = {};
-	var queue = [];
-	var draining = false;
-	var currentQueue;
-	var queueIndex = -1;
-
-	function cleanUpNextTick() {
-	    draining = false;
-	    if (currentQueue.length) {
-	        queue = currentQueue.concat(queue);
-	    } else {
-	        queueIndex = -1;
-	    }
-	    if (queue.length) {
-	        drainQueue();
-	    }
-	}
-
-	function drainQueue() {
-	    if (draining) {
-	        return;
-	    }
-	    var timeout = setTimeout(cleanUpNextTick);
-	    draining = true;
-
-	    var len = queue.length;
-	    while(len) {
-	        currentQueue = queue;
-	        queue = [];
-	        while (++queueIndex < len) {
-	            if (currentQueue) {
-	                currentQueue[queueIndex].run();
-	            }
-	        }
-	        queueIndex = -1;
-	        len = queue.length;
-	    }
-	    currentQueue = null;
-	    draining = false;
-	    clearTimeout(timeout);
-	}
-
-	process.nextTick = function (fun) {
-	    var args = new Array(arguments.length - 1);
-	    if (arguments.length > 1) {
-	        for (var i = 1; i < arguments.length; i++) {
-	            args[i - 1] = arguments[i];
-	        }
-	    }
-	    queue.push(new Item(fun, args));
-	    if (queue.length === 1 && !draining) {
-	        setTimeout(drainQueue, 0);
-	    }
-	};
-
-	// v8 likes predictible objects
-	function Item(fun, array) {
-	    this.fun = fun;
-	    this.array = array;
-	}
-	Item.prototype.run = function () {
-	    this.fun.apply(null, this.array);
-	};
-	process.title = 'browser';
-	process.browser = true;
-	process.env = {};
-	process.argv = [];
-	process.version = ''; // empty string to avoid regexp issues
-	process.versions = {};
-
-	function noop() {}
-
-	process.on = noop;
-	process.addListener = noop;
-	process.once = noop;
-	process.off = noop;
-	process.removeListener = noop;
-	process.removeAllListeners = noop;
-	process.emit = noop;
-
-	process.binding = function (name) {
-	    throw new Error('process.binding is not supported');
-	};
-
-	process.cwd = function () { return '/' };
-	process.chdir = function (dir) {
-	    throw new Error('process.chdir is not supported');
-	};
-	process.umask = function() { return 0; };
 
 
 /***/ },
-/* 22 */
+/* 19 */
 /***/ function(module, exports) {
 
 	module.exports = require("lru-cache");
 
 /***/ },
-/* 23 */
+/* 20 */
 /***/ function(module, exports) {
 
 	module.exports = require("lodash");
