@@ -74,8 +74,8 @@ module.exports =
 
 	  // If this is a scheduled task, we'll get the last log checkpoint from the previous run and continue from there.
 	  req.webtaskContext.storage.get(function (err, data) {
-
-	    var startCheckpointId = typeof data === 'undefined' ? null : data.checkpointId;
+	    var startFromId = ctx.data.START_FROM ? ctx.data.START_FROM : null;
+	    var startCheckpointId = typeof data === 'undefined' ? startFromId : data.checkpointId;
 
 	    var loggly = Loggly.createClient({
 	      token: ctx.data.LOGGLY_CUSTOMER_TOKEN,
@@ -90,7 +90,7 @@ module.exports =
 
 	        var take = Number.parseInt(ctx.data.BATCH_SIZE);
 
-	        take = take > 100 ? 100 : take;
+	        take = take ? take : 100;
 
 	        context.logs = context.logs || [];
 
@@ -477,7 +477,7 @@ module.exports =
 	module.exports = {
 		"name": "loggly",
 		"description": "A client implementation for Loggly cloud Logging-as-a-Service API",
-		"version": "1.1.0",
+		"version": "1.1.1",
 		"author": {
 			"name": "Charlie Robbins",
 			"email": "charlie.robbins@gmail.com"
@@ -493,7 +493,7 @@ module.exports =
 			"loggly"
 		],
 		"dependencies": {
-			"request": "2.67.x",
+			"request": "2.75.x",
 			"timespan": "2.3.x",
 			"json-stringify-safe": "5.0.x"
 		},
@@ -510,16 +510,16 @@ module.exports =
 		"engines": {
 			"node": ">= 0.8.0"
 		},
-		"gitHead": "5e5ab617ae5ee69dd25ae69c6bdedb1b4098fa46",
+		"gitHead": "34c562bcb584b42cab4298c30151707ab5788137",
 		"bugs": {
 			"url": "https://github.com/winstonjs/node-loggly/issues"
 		},
 		"homepage": "https://github.com/winstonjs/node-loggly#readme",
-		"_id": "loggly@1.1.0",
-		"_shasum": "663e3edb8c880b14ee8950cb35c52e0939c537ae",
+		"_id": "loggly@1.1.1",
+		"_shasum": "0a0fc1d3fa3a5ec44fdc7b897beba2a4695cebee",
 		"_from": "loggly@>=1.1.0 <2.0.0",
-		"_npmVersion": "2.14.15",
-		"_nodeVersion": "4.2.2",
+		"_npmVersion": "3.10.5",
+		"_nodeVersion": "4.4.3",
 		"_npmUser": {
 			"name": "indexzero",
 			"email": "charlie.robbins@gmail.com"
@@ -535,12 +535,15 @@ module.exports =
 			}
 		],
 		"dist": {
-			"shasum": "663e3edb8c880b14ee8950cb35c52e0939c537ae",
-			"tarball": "http://registry.npmjs.org/loggly/-/loggly-1.1.0.tgz"
+			"shasum": "0a0fc1d3fa3a5ec44fdc7b897beba2a4695cebee",
+			"tarball": "https://registry.npmjs.org/loggly/-/loggly-1.1.1.tgz"
+		},
+		"_npmOperationalInternal": {
+			"host": "packages-12-west.internal.npmjs.com",
+			"tmp": "tmp/loggly-1.1.1.tgz_1475166745366_0.8216687240637839"
 		},
 		"directories": {},
-		"_resolved": "https://registry.npmjs.org/loggly/-/loggly-1.1.0.tgz",
-		"readme": "ERROR: No README data found!"
+		"_resolved": "https://registry.npmjs.org/loggly/-/loggly-1.1.1.tgz"
 	};
 
 /***/ },
@@ -1219,7 +1222,7 @@ module.exports =
 	* JavaScript TimeSpan Library
 	*
 	* Copyright (c) 2010 Michael Stum, Charlie Robbins
-	*
+	* 
 	* Permission is hereby granted, free of charge, to any person obtaining
 	* a copy of this software and associated documentation files (the
 	* "Software"), to deal in the Software without restriction, including
@@ -1227,10 +1230,10 @@ module.exports =
 	* distribute, sublicense, and/or sell copies of the Software, and to
 	* permit persons to whom the Software is furnished to do so, subject to
 	* the following conditions:
-	*
+	* 
 	* The above copyright notice and this permission notice shall be
 	* included in all copies or substantial portions of the Software.
-	*
+	* 
 	* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
 	* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
 	* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
@@ -1262,28 +1265,28 @@ module.exports =
 	// #### @hours {Number} Number of hours for this instance.
 	// #### @days {Number} Number of days for this instance.
 	// Constructor function for the `TimeSpan` object which represents a length
-	// of positive or negative milliseconds componentized into milliseconds,
+	// of positive or negative milliseconds componentized into milliseconds, 
 	// seconds, hours, and days.
 	//
 	var TimeSpan = exports.TimeSpan = function (milliseconds, seconds, minutes, hours, days) {
 	  this.msecs = 0;
-
+	  
 	  if (isNumeric(days)) {
 	    this.msecs += (days * msecPerDay);
 	  }
-
+	  
 	  if (isNumeric(hours)) {
 	    this.msecs += (hours * msecPerHour);
 	  }
-
+	  
 	  if (isNumeric(minutes)) {
 	    this.msecs += (minutes * msecPerMinute);
 	  }
-
+	  
 	  if (isNumeric(seconds)) {
 	    this.msecs += (seconds * msecPerSecond);
 	  }
-
+	  
 	  if (isNumeric(milliseconds)) {
 	    this.msecs += milliseconds;
 	  }
@@ -1354,23 +1357,23 @@ module.exports =
 	//
 	exports.parse = function (str) {
 	  var match, milliseconds;
-
+	  
 	  function parseMilliseconds (value) {
 	    return value ? parseFloat('0' + value) * 1000 : 0;
 	  }
-
-	  // If we match against a full TimeSpan:
+	  
+	  // If we match against a full TimeSpan: 
 	  //   [days]:[hours]:[minutes]:[seconds].[milliseconds]?
 	  if ((match = str.match(timeSpanWithDays))) {
 	    return new TimeSpan(parseMilliseconds(match[5]), match[4], match[3], match[2], match[1]);
 	  }
-
+	  
 	  // If we match against a partial TimeSpan:
 	  //   [hours]:[minutes]:[seconds].[milliseconds]?
 	  if ((match = str.match(timeSpanNoDays))) {
 	    return new TimeSpan(parseMilliseconds(match[4]), match[3], match[2], match[1], 0);
 	  }
-
+	  
 	  return null;
 	};
 
@@ -1386,7 +1389,7 @@ module.exports =
 	    compute: function (delta, computed) {
 	      return _compute(delta, computed, {
 	        current: 'milliseconds',
-	        next: 'seconds',
+	        next: 'seconds', 
 	        max: 1000
 	      });
 	    }
@@ -1396,7 +1399,7 @@ module.exports =
 	    compute: function (delta, computed) {
 	      return _compute(delta, computed, {
 	        current: 'seconds',
-	        next: 'minutes',
+	        next: 'minutes', 
 	        max: 60
 	      });
 	    }
@@ -1406,7 +1409,7 @@ module.exports =
 	    compute: function (delta, computed) {
 	      return _compute(delta, computed, {
 	        current: 'minutes',
-	        next: 'hours',
+	        next: 'hours', 
 	        max: 60
 	      });
 	    }
@@ -1416,7 +1419,7 @@ module.exports =
 	    compute: function (delta, computed) {
 	      return _compute(delta, computed, {
 	        current: 'hours',
-	        next: 'days',
+	        next: 'days', 
 	        max: 24
 	      });
 	    }
@@ -1428,40 +1431,40 @@ module.exports =
 	          sign     = delta >= 0 ? 1 : -1,
 	          opsign   = delta >= 0 ? -1 : 1,
 	          clean    = 0;
-
+	      
 	      function update (months) {
-	        if (months < 0) {
+	        if (months < 0) { 
 	          computed.years -= 1;
 	          return 11;
 	        }
-	        else if (months > 11) {
+	        else if (months > 11) { 
 	          computed.years += 1;
-	          return 0
+	          return 0 
 	        }
-
+	        
 	        return months;
 	      }
-
-	      if (delta) {
+	      
+	      if (delta) {          
 	        while (Math.abs(delta) >= days) {
 	          computed.months += sign * 1;
 	          computed.months = update(computed.months);
 	          delta += opsign * days;
 	          days = monthDays(computed.months, computed.years);
 	        }
-
+	      
 	        computed.days += (opsign * delta);
 	      }
-
+	      
 	      if (computed.days < 0) { clean = -1 }
 	      else if (computed.days > months[computed.months]) { clean = 1 }
-
+	      
 	      if (clean === -1 || clean === 1) {
 	        computed.months += clean;
 	        computed.months = update(computed.months);
 	        computed.days = months[computed.months] + computed.days;
 	      }
-
+	            
 	      return computed;
 	    }
 	  },
@@ -1469,16 +1472,16 @@ module.exports =
 	    exp: /(\d+)month[s]?/i,
 	    compute: function (delta, computed) {
 	      var round = delta > 0 ? Math.floor : Math.ceil;
-	      if (delta) {
+	      if (delta) { 
 	        computed.years += round.call(null, delta / 12);
 	        computed.months += delta % 12;
 	      }
-
+	      
 	      if (computed.months > 11) {
 	        computed.years += Math.floor((computed.months + 1) / 12);
 	        computed.months = ((computed.months + 1) % 12) - 1;
 	      }
-
+	      
 	      return computed;
 	    }
 	  },
@@ -1526,13 +1529,13 @@ module.exports =
 	      sign;
 
 	  //
-	  // If Date string supplied actually conforms
+	  // If Date string supplied actually conforms 
 	  // to UTC Time (ISO8601), return a new Date.
 	  //
 	  if (!isNaN(dateTime)) {
 	    return new Date(dateTime);
 	  }
-
+	  
 	  //
 	  // Create the `RegExp` for the end component
 	  // of the target `str` to parse.
@@ -1540,7 +1543,7 @@ module.exports =
 	  parserNames.forEach(function (group) {
 	    zulu += '(\\d+[a-zA-Z]+)?';
 	  });
-
+	  
 	  if (/^NOW/i.test(str)) {
 	    //
 	    // If the target `str` is a liberal `NOW-*`,
@@ -1561,22 +1564,22 @@ module.exports =
 	    dateTime = str.match(new RegExp(iso, 'i'));
 	    dateTime = Date.parse(dateTime[1]);
 	  }
-
+	  
 	  //
-	  // If there was no match on either part then
+	  // If there was no match on either part then 
 	  // it must be a bad value.
 	  //
 	  if (!dateTime || !(modifiers = str.match(new RegExp(zulu, 'i')))) {
 	    return null;
 	  }
-
+	    
 	  //
 	  // Create a new `Date` object from the `ISO8601`
 	  // component of the target `str`.
 	  //
 	  dateTime = new Date(dateTime);
 	  sign = modifiers[1] === '+' ? 1 : -1;
-
+	  
 	  //
 	  // Create an Object-literal for consistently accessing
 	  // the various components of the computed Date.
@@ -1590,10 +1593,10 @@ module.exports =
 	    months: dateTime.getMonth(),
 	    years: dateTime.getFullYear()
 	  };
-
+	  
 	  //
 	  // Parse the individual component spans (months, years, etc)
-	  // from the modifier strings that we parsed from the end
+	  // from the modifier strings that we parsed from the end 
 	  // of the target `str`.
 	  //
 	  modifiers.slice(2).filter(Boolean).forEach(function (modifier) {
@@ -1602,19 +1605,19 @@ module.exports =
 	      if (!(match = modifier.match(parsers[name].exp))) {
 	        return;
 	      }
-
+	      
 	      diff[name] = sign * parseInt(match[1], 10);
 	    })
 	  });
-
+	  
 	  //
-	  // Compute the total `diff` by iteratively computing
+	  // Compute the total `diff` by iteratively computing 
 	  // the partial components from smallest to largest.
 	  //
-	  parserNames.forEach(function (name) {
+	  parserNames.forEach(function (name) {    
 	    computed = parsers[name].compute(diff[name], computed);
 	  });
-
+	  
 	  return new Date(
 	    computed.years,
 	    computed.months,
@@ -1638,15 +1641,15 @@ module.exports =
 	  if (typeof start === 'string') {
 	    start = exports.parseDate(start);
 	  }
-
+	  
 	  if (typeof end === 'string') {
 	    end = exports.parseDate(end);
 	  }
-
+	  
 	  if (!(start instanceof Date && end instanceof Date)) {
 	    return null;
 	  }
-
+	  
 	  var differenceMsecs = end.valueOf() - start.valueOf();
 	  if (abs) {
 	    differenceMsecs = Math.abs(differenceMsecs);
@@ -1694,7 +1697,7 @@ module.exports =
 
 	//
 	// ## Addition
-	// Methods for adding `TimeSpan` instances,
+	// Methods for adding `TimeSpan` instances, 
 	// milliseconds, seconds, hours, and days to other
 	// `TimeSpan` instances.
 	//
@@ -1726,7 +1729,7 @@ module.exports =
 	//
 	TimeSpan.prototype.addSeconds = function (seconds) {
 	  if (!isNumeric(seconds)) { return }
-
+	  
 	  this.msecs += (seconds * msecPerSecond);
 	};
 
@@ -1762,7 +1765,7 @@ module.exports =
 
 	//
 	// ## Subtraction
-	// Methods for subtracting `TimeSpan` instances,
+	// Methods for subtracting `TimeSpan` instances, 
 	// milliseconds, seconds, hours, and days from other
 	// `TimeSpan` instances.
 	//
@@ -1844,7 +1847,7 @@ module.exports =
 	  if (roundDown === true) {
 	    result = Math.floor(result);
 	  }
-
+	  
 	  return result;
 	};
 
@@ -1859,7 +1862,7 @@ module.exports =
 	  if (roundDown === true) {
 	    result = Math.floor(result);
 	  }
-
+	  
 	  return result;
 	};
 
@@ -1874,7 +1877,7 @@ module.exports =
 	  if (roundDown === true) {
 	    result = Math.floor(result);
 	  }
-
+	  
 	  return result;
 	};
 
@@ -1889,7 +1892,7 @@ module.exports =
 	  if (roundDown === true) {
 	    result = Math.floor(result);
 	  }
-
+	  
 	  return result;
 	};
 
@@ -1904,7 +1907,7 @@ module.exports =
 	  if (roundDown === true) {
 	    result = Math.floor(result);
 	  }
-
+	  
 	  return result;
 	};
 
@@ -1966,7 +1969,7 @@ module.exports =
 	};
 
 	//
-	// ### function toString ()
+	// ### function toString () 
 	// Returns a string representation of this `TimeSpan`
 	// instance according to current `format`.
 	//
@@ -1976,7 +1979,7 @@ module.exports =
 	};
 
 	//
-	// ### @private function _format ()
+	// ### @private function _format () 
 	// Returns the default string representation of this instance.
 	//
 	TimeSpan.prototype._format = function () {
@@ -1989,9 +1992,9 @@ module.exports =
 	};
 
 	//
-	// ### @private function isNumeric (input)
+	// ### @private function isNumeric (input) 
 	// #### @input {Number} Value to check numeric quality of.
-	// Returns a value indicating the numeric quality of the
+	// Returns a value indicating the numeric quality of the 
 	// specified `input`.
 	//
 	function isNumeric (input) {
@@ -2004,7 +2007,7 @@ module.exports =
 	// #### @computed {Object} Currently computed date.
 	// #### @options {Object} Options for the computation
 	// Performs carry forward addition or subtraction for the
-	// `options.current` component of the `computed` date, carrying
+	// `options.current` component of the `computed` date, carrying 
 	// it forward to `options.next` depending on the maximum value,
 	// `options.max`.
 	//
@@ -2013,12 +2016,12 @@ module.exports =
 	      next    = options.next,
 	      max     = options.max,
 	      round  = delta > 0 ? Math.floor : Math.ceil;
-
+	      
 	  if (delta) {
 	    computed[next] += round.call(null, delta / max);
 	    computed[current] += delta % max;
 	  }
-
+	  
 	  if (Math.abs(computed[current]) >= max) {
 	    computed[next] += round.call(null, computed[current] / max)
 	    computed[current] = computed[current] % max;
@@ -2036,12 +2039,12 @@ module.exports =
 	// leap years.
 	//
 	var months = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-	function monthDays (month, year) {
-	  if (((year % 100 !== 0 && year % 4 === 0)
+	function monthDays (month, year) {    
+	  if (((year % 100 !== 0 && year % 4 === 0) 
 	    || year % 400 === 0) && month === 1) {
 	    return 29;
 	  }
-
+	  
 	  return months[month];
 	}
 
@@ -2217,7 +2220,7 @@ module.exports =
 /* 20 */
 /***/ function(module, exports) {
 
-	module.exports = require("lodash");
+	module.exports = require(undefined);
 
 /***/ }
 /******/ ]);

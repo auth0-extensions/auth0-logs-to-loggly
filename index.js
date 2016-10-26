@@ -19,8 +19,8 @@ function lastLogCheckpoint (req, res) {
 
   // If this is a scheduled task, we'll get the last log checkpoint from the previous run and continue from there.
   req.webtaskContext.storage.get((err, data) => {
-
-    let startCheckpointId = typeof data === 'undefined' ? null : data.checkpointId;
+    let startFromId = ctx.data.START_FROM ? ctx.data.START_FROM : null;
+    let startCheckpointId = typeof data === 'undefined' ? startFromId : data.checkpointId;
 
     const loggly = Loggly.createClient({
       token:     ctx.data.LOGGLY_CUSTOMER_TOKEN,
@@ -36,7 +36,7 @@ function lastLogCheckpoint (req, res) {
 
           let take = Number.parseInt(ctx.data.BATCH_SIZE);
 
-          take = take > 100 ? 100 : take;
+          take = take ? take : 100;
 
           context.logs = context.logs || [];
 
