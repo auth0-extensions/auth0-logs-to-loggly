@@ -1,7 +1,7 @@
 import React, { PropTypes, Component } from 'react';
 import { Button, ButtonToolbar } from 'react-bootstrap';
 import connectContainer from 'redux-static';
-import { Error, LoadingPanel, Pagination, TableTotals, InputCheckBox } from 'auth0-extension-ui';
+import { Error, LoadingPanel, Pagination, TableTotals } from 'auth0-extension-ui';
 
 import { logActions } from '../actions';
 
@@ -50,7 +50,14 @@ export default connectContainer(class extends Component {
       <div>
         <div className="col-xs-12">
           <div className="col-xs-6">
-            <InputCheckBox input={{ onChange: this.updateFilter }} name="only-errors" label="Only Errors" />
+            <ul className="nav nav-pills">
+              <li className={!this.props.filter.status ? 'active' : null} >
+                <a onClick={() => this.updateFilter(false)}>Show all</a>
+              </li>
+              <li className={this.props.filter.status ? 'active' : null}>
+                <a onClick={() => this.updateFilter(true)}>Show errors</a>
+              </li>
+            </ul>
           </div>
           <ButtonToolbar className="pull-right">
             <Button bsSize="small" className="btn-default" onClick={this.handleReload}>
