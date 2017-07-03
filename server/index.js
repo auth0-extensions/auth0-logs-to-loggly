@@ -25,12 +25,24 @@ module.exports = (configProvider, storageProvider) => {
     stream: logger.stream
   }));
 
-  if (process.env.NODE_ENV === 'development') {
-    app.use(bodyParser.json());
-    app.use(bodyParser.urlencoded({ extended: false }));
-  }
+  const prepareBody = (middleware) =>
+    (req, res, next) => {
+      if (req.webtaskContext && req.webtaskContext.body) {
+        req.body = req.webtaskContext.body;
+        return next();
+      }
 
-  // Configure routes.
+      return middleware(req, res, next);
+    };
+
+  app.use(prepareBody(bodyParser.json()));
+  app.use(prepareBody(bodyParser.urlencoded({ extended: false })));
+
+  app.use('/meta', meta());
+  app.use('/.extensions', hooks());
+
+  app.use(processLogs(storage));
+
   app.use(expressTools.routes.dashboardAdmins({
     secret: config('EXTENSION_SECRET'),
     audience: 'urn:logs-to-loggly',
@@ -39,16 +51,11 @@ module.exports = (configProvider, storageProvider) => {
     baseUrl: config('PUBLIC_WT_URL') || config('WT_URL'),
     clientName: 'Logs to Loggly',
     urlPrefix: '',
-    sessionStorageKey: 'logs-to-loggly:apiToken',
-    scopes: 'read:logs read:users'
+    sessionStorageKey: 'logs-to-loggly:apiToken'
   }));
-
-  app.use('/meta', meta());
-  app.use('/.extensions', hooks());
 
   app.use('/app', Express.static(path.join(__dirname, '../dist')));
 
-  app.use(processLogs(storage));
   app.use('/', routes(storage));
 
   // Generic error handler.

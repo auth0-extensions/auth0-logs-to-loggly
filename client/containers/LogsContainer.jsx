@@ -30,9 +30,9 @@ export default connectContainer(class extends Component {
     this.props.fetchLogs();
   }
 
-  updateFilter = () => {
-    this.props.setFilter(!this.props.filter.status);
-    this.props.fetchLogs(1, !this.props.filter.status);
+  updateFilter = (status) => {
+    this.props.setFilter(status);
+    this.props.fetchLogs(1, status);
   };
 
   handleReload = () => {
