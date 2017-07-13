@@ -15,14 +15,13 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/auth0/auth0-logs-to-loggly.git"
+    "url": "git+https://github.com/auth0-extensions/auth0-logs-to-loggly.git"
   },
-  "author": "javier.centurion@auth0.com",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/auth0/auth0-logs-to-loggly/issues"
+    "url": "https://github.com/auth0-extensions/auth0-logs-to-loggly/issues"
   },
-  "homepage": "https://github.com/auth0/auth0-logs-to-loggly#readme",
+  "homepage": "https://github.com/auth0-extensions/auth0-logs-to-loggly#readme",
   "auth0-extension": {
     "externals": [
       "async@2.1.2",
