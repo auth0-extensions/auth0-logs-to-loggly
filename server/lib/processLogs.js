@@ -50,7 +50,7 @@ module.exports = (storage) =>
       domain: config('AUTH0_DOMAIN'),
       clientId: config('AUTH0_CLIENT_ID'),
       clientSecret: config('AUTH0_CLIENT_SECRET'),
-      batchSize: config('BATCH_SIZE'),
+      batchSize: parseInt(config('BATCH_SIZE'), 10),
       startFrom: config('START_FROM'),
       logLevel: config('LOG_LEVEL'),
       logTypes: config('LOG_TYPES')
