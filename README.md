@@ -1,12 +1,12 @@
-# Auth0 - Logs to Loggly
+# Auth0 - Logs to Logdna
 
 [![Auth0 Extensions](http://cdn.auth0.com/extensions/assets/badge.svg)](https://sandbox.it.auth0.com/api/run/auth0-extensions/extensions-badge?webtask_no_cache=1)
 
-This extension will take all of your Auth0 logs and export them to Loggly.
+This extension will take all of your Auth0 logs and export them to Logdna.
 
 ## Usage
 
-Go to the `search` section of your [Loggly](https://www.loggly.com) account and filter by tag `auth0`.
+Go to the `search` section of your [Logdna](https://www.logdna.com) account and filter by tag `auth0`.
 
 ## Issue Reporting
 
