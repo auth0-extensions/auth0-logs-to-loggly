@@ -5,7 +5,7 @@ import * as constants from '../constants';
 
 export function logout() {
   return (dispatch) => {
-    localStorage.removeItem('logs-to-lofdna:apiToken');
+    localStorage.removeItem('logs-to-logdna:apiToken');
     sessionStorage.removeItem('logs-to-logdna:apiToken');
 
     window.location = window.config.AUTH0_MANAGE_URL;
