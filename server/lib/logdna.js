@@ -1,10 +1,15 @@
-const _ = require('lodash');
 const request = require('request');
-const logger = require('./logger');
+const logdna = require('logdna');
+const ProcessLogs = require('./processLogs');
 
-let config = {
-  endpoint: 'https://logs.logdna.com/logs/ingest?hostname=',
-};
+const config = getConfig();
+
+const options = {
+  host: config.host,
+  appname: config.appname
+}
+
+const logger = logdna.setupDefaultLogger(config.key, options);
 
 function sendLogs(logs, callback) {
   if (logs.length === 0) {
@@ -15,22 +20,22 @@ function sendLogs(logs, callback) {
     "lines": []
   };
 
-  var i = 0;
-  logs.forEach(function (entry) {
+  let i = 0;
+  let messages = logs.map(entry => {
     logger.debug(`auth0 log #${i++}`);
     logger.debug(JSON.stringify(entry));
 
-    var single = {
+    let single = {
       "app": config.appname
     };
     single.line=JSON.stringify(entry);
-    messages.lines.push(single);
+    return single;
   });
 
   request({
     method: 'POST',
     timeout: 2000,
-    url: `${config.endpoint}${config.hostname}`,
+    url: config.url,
     headers: {'apikey': config.key, 'cache-control': 'no-cache', 'Content-Type': 'application/json' },
     body: messages,
     json: true
@@ -61,15 +66,6 @@ function LogdnaLogging (host, key, app) {
   if (!app) {
     throw new Error('LOGDNA_APP_NAME is required for Logdna');
   }
-
-  config = _.merge(
-    config,
-    {
-      hostname: host,
-      key: key,
-      appname: app,
-    },
-  );
 }
 
 LogdnaLogging.prototype.send = function(logs, callback) {

@@ -5,6 +5,15 @@ const config = require('../lib/config');
 const logger = require('../lib/logger');
 const Logdna = require('../lib/logdna');
 
+getConfig = function () {
+  return {
+    url: `https://logs.logdna.com/logs/ingest?hostname=${config('HOSTNAME')}`,
+    host: config('HOSTNAME'),
+    key: config('LOGDNA_INGESTION_KEY'),
+    appname: config('LOGDNA_APP_NAME')
+  }
+}
+
 module.exports = (storage) =>
   (req, res, next) => {
     const wtBody = (req.webtaskContext && req.webtaskContext.body) || req.body || {};
