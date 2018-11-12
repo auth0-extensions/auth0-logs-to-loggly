@@ -16,10 +16,6 @@ function sendLogs(logs, callback) {
     callback();
   }
 
-  const messages = {
-    "lines": []
-  };
-
   let i = 0;
   let messages = logs.map(entry => {
     logger.debug(`auth0 log #${i++}`);
